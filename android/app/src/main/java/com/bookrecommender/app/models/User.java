@@ -1,4 +1,4 @@
-package com.example.bookrecommender.models;
+package com.bookrecommender.app.models;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;

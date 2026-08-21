@@ -1,34 +1,17 @@
-package com.example.bookrecommender.models;
+package com.bookrecommender.app.models;
 
 import com.google.gson.annotations.SerializedName;
 
 public class Book {
-    @SerializedName("bookId")
-    private String bookId;
-
-    @SerializedName("title")
-    private String title;
-
-    @SerializedName("author")
-    private String author;
-
-    @SerializedName("genres")
-    private String genres;
-
-    @SerializedName("rating")
-    private double rating;
-
-    @SerializedName("coverImg")
-    private String coverImg;
-
-    @SerializedName("language")
-    private String language;
-
-    @SerializedName("similarity_score")
-    private double similarityScore;
-
-    @SerializedName("match_score")
-    private double matchScore;
+    @SerializedName("bookId") private String bookId;
+    @SerializedName("title") private String title;
+    @SerializedName("author") private String author;
+    @SerializedName("genres") private String genres;
+    @SerializedName("rating") private double rating;
+    @SerializedName("coverImg") private String coverImg;
+    @SerializedName("language") private String language;
+    @SerializedName("similarity_score") private double similarityScore;
+    @SerializedName("match_score") private double matchScore;
 
     public Book() {}
 
