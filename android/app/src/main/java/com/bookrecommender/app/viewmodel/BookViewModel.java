@@ -28,6 +28,34 @@ public class BookViewModel extends ViewModel {
     public LiveData<Boolean> getIsLoading() { return isLoading; }
     public LiveData<String> getError() { return error; }
 
+    public void loadPersonalizedRecommendations(int userId, int topN, String lang) {
+        Log.d(TAG, "Loading personalized recommendations for user: " + userId);
+        isLoading.setValue(true);
+        error.setValue(null);
+
+        apiService.getUserRecommendations(userId, topN, lang).enqueue(new Callback<List<Book>>() {
+            @Override
+            public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                isLoading.setValue(false);
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d(TAG, "Success: " + response.body().size() + " personalized books");
+                    books.setValue(response.body());
+                } else {
+                    Log.e(TAG, "Failed with code: " + response.code());
+                    error.setValue("Failed: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Book>> call, Throwable t) {
+                isLoading.setValue(false);
+                Log.e(TAG, "Network error: " + t.getMessage());
+                error.setValue("Network: " + t.getMessage());
+            }
+        });
+    }
+
+    // متد قدیمی: کتاب‌های محبوب (برای fallback)
     public void loadPopularBooks(int topN, String lang) {
         Log.d(TAG, "Loading popular books: topN=" + topN + ", lang=" + lang);
         isLoading.setValue(true);
