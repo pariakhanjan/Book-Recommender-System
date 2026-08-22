@@ -1,8 +1,9 @@
 package com.bookrecommender.app.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.io.Serializable;
 
-public class Book {
+public class Book implements Serializable {
     @SerializedName("bookId") private String bookId;
     @SerializedName("title") private String title;
     @SerializedName("author") private String author;

@@ -1,6 +1,7 @@
 package com.bookrecommender.app.api;
 
 import com.bookrecommender.app.models.Book;
+import com.bookrecommender.app.models.FeedbackRequest;
 import com.bookrecommender.app.models.User;
 import com.bookrecommender.app.models.UserPreferences;
 import java.util.List;
@@ -20,5 +21,6 @@ public interface ApiInterface {
     @GET("/api/users/{user_id}/preferences") Call<UserPreferences> getUserPreferences(@Path("user_id") int userId);
     @PUT("/api/users/{user_id}/preferences") Call<UserPreferences> updateUserPreferences(@Path("user_id") int userId, @Body UserPreferences preferences);
     @POST("/api/users/{user_id}/add-to-liked") Call<UserPreferences> addToLikedBooks(@Path("user_id") int userId, @Body Map<String, String> bookRequest);
-    @POST("/api/feedback") Call<Map<String, Object>> submitFeedback(@Body Map<String, Object> feedback);
+    @POST("/api/feedback") Call<Map<String, Object>> submitFeedback(@Body FeedbackRequest request);
+
 }
