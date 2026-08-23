@@ -9,30 +9,24 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.bookrecommender.app.R;
 import com.bookrecommender.app.api.ApiInterface;
 import com.bookrecommender.app.api.RetrofitClient;
 import com.bookrecommender.app.models.User;
 import com.bookrecommender.app.models.UserPreferences;
 import com.bookrecommender.app.utils.UserManager;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SetupActivity extends AppCompatActivity {
-
     private static final String TAG = "SetupActivity";
-    private EditText etUsername;
+    private EditText etUsername, etPassword;
+    private CheckBox chkEn, chkFa, chkFiction, chkMystery, chkSciFi, chkRomance, chkFantasy, chkThriller, chkBiography, chkHistory;
+    private CheckBox chkAuthor1, chkAuthor2, chkAuthor3, chkAuthor4, chkAuthor5;
     private Button btnSubmit;
     private ProgressBar progressBar;
     private ApiInterface apiService;
@@ -47,75 +41,84 @@ public class SetupActivity extends AppCompatActivity {
         userManager = new UserManager(this);
 
         etUsername = findViewById(R.id.etUsername);
+        etPassword = findViewById(R.id.etPassword);
+        chkEn = findViewById(R.id.chkEn);
+        chkFa = findViewById(R.id.chkFa);
+
+        chkFiction = findViewById(R.id.chkFiction);
+        chkMystery = findViewById(R.id.chkMystery);
+        chkSciFi = findViewById(R.id.chkSciFi);
+        chkRomance = findViewById(R.id.chkRomance);
+        chkFantasy = findViewById(R.id.chkFantasy);
+        chkThriller = findViewById(R.id.chkThriller);
+        chkBiography = findViewById(R.id.chkBiography);
+        chkHistory = findViewById(R.id.chkHistory);
+
+        chkAuthor1 = findViewById(R.id.chkAuthor1);
+        chkAuthor2 = findViewById(R.id.chkAuthor2);
+        chkAuthor3 = findViewById(R.id.chkAuthor3);
+        chkAuthor4 = findViewById(R.id.chkAuthor4);
+        chkAuthor5 = findViewById(R.id.chkAuthor5);
+
         btnSubmit = findViewById(R.id.btnSubmit);
         progressBar = findViewById(R.id.progressBar);
 
-        btnSubmit.setOnClickListener(v -> submitPreferences());
+        btnSubmit.setOnClickListener(v -> submitData());
     }
 
-    private void submitPreferences() {
+    private void submitData() {
         String username = etUsername.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
 
-        if (username.isEmpty()) {
-            Toast.makeText(this, "Please enter a username", Toast.LENGTH_SHORT).show();
+        if (username.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Username and password are required", Toast.LENGTH_SHORT).show();
             return;
         }
-
         if (username.length() < 3) {
             Toast.makeText(this, "Username must be at least 3 characters", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        // جمع‌آوری ژانرهای انتخاب شده
-        List<String> selectedGenres = new ArrayList<>();
-        if (((CheckBox) findViewById(R.id.chkFiction)).isChecked()) selectedGenres.add("Fiction");
-        if (((CheckBox) findViewById(R.id.chkMystery)).isChecked()) selectedGenres.add("Mystery");
-        if (((CheckBox) findViewById(R.id.chkSciFi)).isChecked()) selectedGenres.add("Science Fiction");
-        if (((CheckBox) findViewById(R.id.chkRomance)).isChecked()) selectedGenres.add("Romance");
-        if (((CheckBox) findViewById(R.id.chkFantasy)).isChecked()) selectedGenres.add("Fantasy");
-        if (((CheckBox) findViewById(R.id.chkThriller)).isChecked()) selectedGenres.add("Thriller");
-        if (((CheckBox) findViewById(R.id.chkBiography)).isChecked()) selectedGenres.add("Biography");
-        if (((CheckBox) findViewById(R.id.chkHistory)).isChecked()) selectedGenres.add("History");
-
-        // جمع‌آوری نویسندگان انتخاب شده
-        List<String> selectedAuthors = new ArrayList<>();
-        if (((CheckBox) findViewById(R.id.chkAuthor1)).isChecked()) selectedAuthors.add("Stephen King");
-        if (((CheckBox) findViewById(R.id.chkAuthor2)).isChecked()) selectedAuthors.add("J.K. Rowling");
-        if (((CheckBox) findViewById(R.id.chkAuthor3)).isChecked()) selectedAuthors.add("Agatha Christie");
-        if (((CheckBox) findViewById(R.id.chkAuthor4)).isChecked()) selectedAuthors.add("George Orwell");
-        if (((CheckBox) findViewById(R.id.chkAuthor5)).isChecked()) selectedAuthors.add("Jane Austen");
-
-        if (selectedGenres.isEmpty()) {
-            Toast.makeText(this, "Please select at least one genre", Toast.LENGTH_SHORT).show();
+        if (!chkEn.isChecked() && !chkFa.isChecked()) {
+            Toast.makeText(this, "Please select at least one language", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // نمایش Loading
+        List<String> languages = new ArrayList<>();
+        if (chkEn.isChecked()) languages.add("en");
+        if (chkFa.isChecked()) languages.add("fa");
+
+        List<String> likedGenres = new ArrayList<>();
+        if (chkFiction.isChecked()) likedGenres.add("Fiction");
+        if (chkMystery.isChecked()) likedGenres.add("Mystery");
+        if (chkSciFi.isChecked()) likedGenres.add("Science Fiction");
+        if (chkRomance.isChecked()) likedGenres.add("Romance");
+        if (chkFantasy.isChecked()) likedGenres.add("Fantasy");
+        if (chkThriller.isChecked()) likedGenres.add("Thriller");
+        if (chkBiography.isChecked()) likedGenres.add("Biography");
+        if (chkHistory.isChecked()) likedGenres.add("History");
+
+        List<String> likedAuthors = new ArrayList<>();
+        if (chkAuthor1.isChecked()) likedAuthors.add("Stephen King");
+        if (chkAuthor2.isChecked()) likedAuthors.add("J.K. Rowling");
+        if (chkAuthor3.isChecked()) likedAuthors.add("Agatha Christie");
+        if (chkAuthor4.isChecked()) likedAuthors.add("George Orwell");
+        if (chkAuthor5.isChecked()) likedAuthors.add("Jane Austen");
+
         btnSubmit.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
 
-        // مرحله ۱: ساخت کاربر
-        createUser(username, selectedGenres, selectedAuthors);
-    }
-
-    private void createUser(String username, List<String> genres, List<String> authors) {
-        User newUser = new User(username, username + "@example.com");
-
+        User newUser = new User(username, username + "@example.com", password);
         apiService.createUser(newUser).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     User createdUser = response.body();
                     Log.d(TAG, "User created with ID: " + createdUser.getId());
-
-                    // ذخیره در SharedPreferences
                     userManager.saveUser(createdUser.getId(), username);
-
-                    // مرحله ۲: ارسال Preferences
-                    updatePreferences(createdUser.getId(), genres, authors);
+                    updatePreferences(createdUser.getId(), languages, likedGenres, likedAuthors);
                 } else {
                     Log.e(TAG, "Create user failed: " + response.code());
-                    Toast.makeText(SetupActivity.this, "Failed to create user", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SetupActivity.this, "Failed to create user. Username may exist.", Toast.LENGTH_SHORT).show();
                     resetUI();
                 }
             }
@@ -129,40 +132,35 @@ public class SetupActivity extends AppCompatActivity {
         });
     }
 
-    private void updatePreferences(int userId, List<String> genres, List<String> authors) {
-        Map<String, Object> prefMap = new HashMap<>();
-        prefMap.put("liked_genres", genres);
-        prefMap.put("liked_authors", authors);
-        prefMap.put("liked_book_ids", new ArrayList<>());
-        prefMap.put("disliked_genres", new ArrayList<>());
-        prefMap.put("disliked_authors", new ArrayList<>());
-        prefMap.put("disliked_book_ids", new ArrayList<>());
+    private void updatePreferences(int userId, List<String> languages, List<String> genres, List<String> authors) {
+        UserPreferences prefs = new UserPreferences();
+        prefs.setUserId(userId);
+        prefs.setPreferredLanguages(languages);
+        prefs.setLikedGenres(genres);
+        prefs.setLikedAuthors(authors);
+        prefs.setLikedBookIds(new ArrayList<>());
+        prefs.setDislikedGenres(new ArrayList<>());
+        prefs.setDislikedAuthors(new ArrayList<>());
+        prefs.setDislikedBookIds(new ArrayList<>());
 
-        apiService.updateUserPreferences(userId, prefMap).enqueue(new Callback<Map>() {
+        apiService.updateUserPreferences(userId, prefs).enqueue(new Callback<UserPreferences>() {
             @Override
-            public void onResponse(Call<Map> call, Response<Map> response) {
+            public void onResponse(Call<UserPreferences> call, Response<UserPreferences> response) {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful()) {
                     Log.d(TAG, "Preferences updated successfully");
                     Toast.makeText(SetupActivity.this, "Setup complete! Welcome!", Toast.LENGTH_SHORT).show();
-
-                    // انتقال به MainActivity
-                    Intent intent = new Intent(SetupActivity.this, MainActivity.class);
-                    startActivity(intent);
+                    startActivity(new Intent(SetupActivity.this, MainActivity.class));
                     finish();
                 } else {
                     Log.e(TAG, "Update preferences failed: " + response.code());
-                    Toast.makeText(SetupActivity.this, "User created but preferences failed", Toast.LENGTH_LONG).show();
-
-                    // حتی اگر preferences شکست خورد، به MainActivity برو
-                    Intent intent = new Intent(SetupActivity.this, MainActivity.class);
-                    startActivity(intent);
+                    startActivity(new Intent(SetupActivity.this, MainActivity.class));
                     finish();
                 }
             }
 
             @Override
-            public void onFailure(Call<Map> call, Throwable t) {
+            public void onFailure(Call<UserPreferences> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 Log.e(TAG, "Network error: " + t.getMessage());
                 Toast.makeText(SetupActivity.this, "Network error", Toast.LENGTH_SHORT).show();

@@ -2,6 +2,33 @@ plugins {
     id 'com.android.application'
 }
 
+def getLocalIpAddress() {
+    try {
+        def process = "ipconfig".execute()
+        def text = process.text
+        def matcher = text =~ /IPv4 Address.*: (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/
+        if (matcher.find()) {
+            def ip = matcher.group(1)
+            if (ip != "127.0.0.1") {
+                return "\"http://${ip}:8000\""
+            }
+        }
+
+        process = "hostname -I".execute()
+        if (process.waitFor() == 0) {
+            def ips = process.text.split(" ")
+            for (def ip in ips) {
+                if (ip.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}") && ip != "127.0.0.1") {
+                    return "\"http://${ip}:8000\""
+                }
+            }
+        }
+    } catch (Exception e) {
+        println "Warning: Could not auto-detect IP address. Using fallback."
+    }
+    return '"http://10.0.2.2:8000"' //emulator
+}
+
 android {
     namespace 'com.bookrecommender.app'
     compileSdk 34
@@ -13,11 +40,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    lint {
-        checkReleaseBuilds false
-        abortOnError false
+        buildConfigField "String", "API_BASE_URL", getLocalIpAddress()
     }
 
     buildTypes {
@@ -32,6 +55,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
     dependenciesInfo {
         includeInApk true

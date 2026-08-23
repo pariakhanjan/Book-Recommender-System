@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_500">#FF6200EE</color>
+    <color name="soft_purple">#F3E5F5</color>
+    <color name="primary_purple">#5E35B1</color>
+    <color name="primary_blue">#3949AB</color>
+    <color name="accent_blue">#5C6BC0</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="gray_text">#666666</color>
+    <color name="rating_color">#FF9800</color>
+    <color name="placeholder_bg">#E0E0E0</color>
 </resources>

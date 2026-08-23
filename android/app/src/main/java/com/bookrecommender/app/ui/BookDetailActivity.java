@@ -13,6 +13,7 @@ import com.bookrecommender.app.api.ApiInterface;
 import com.bookrecommender.app.api.RetrofitClient;
 import com.bookrecommender.app.models.Book;
 import com.bookrecommender.app.models.FeedbackRequest;
+import com.bookrecommender.app.utils.UserManager;
 import com.bumptech.glide.Glide;
 import java.util.Map;
 import retrofit2.Call;
@@ -23,6 +24,7 @@ public class BookDetailActivity extends AppCompatActivity {
     private static final String TAG = "BookDetailActivity";
     private Book book;
     private ApiInterface apiService;
+    private UserManager userManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +39,8 @@ public class BookDetailActivity extends AppCompatActivity {
         }
 
         apiService = RetrofitClient.getClient().create(ApiInterface.class);
+        userManager = new UserManager(this);
+
         initViews();
         setupClickListeners();
     }
@@ -70,29 +74,27 @@ public class BookDetailActivity extends AppCompatActivity {
 
     private void sendFeedback(String feedbackType) {
         Log.d(TAG, "Sending feedback: " + feedbackType + " for book: " + book.getBookId());
-
         TextView tvFeedback = findViewById(R.id.tvFeedbackMessage);
+        int userId = userManager.getUserId();
 
-        FeedbackRequest request = new FeedbackRequest(1, book.getBookId(), feedbackType);
+        if (userId == -1) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FeedbackRequest request = new FeedbackRequest(userId, book.getBookId(), feedbackType);
 
         apiService.submitFeedback(request).enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 if (response.isSuccessful()) {
-                    String msg = feedbackType.equals("liked")
-                            ? "✅ Added to liked list"
-                            : "❌ Added to disliked list";
+                    String msg = feedbackType.equals("liked") ? "Added to liked list" : "Added to disliked list";
                     Log.d(TAG, "Feedback success: " + msg);
                     tvFeedback.setText(msg);
                     tvFeedback.setVisibility(View.VISIBLE);
                     Toast.makeText(BookDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
                 } else {
-                    try {
-                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "Unknown";
-                        Log.e(TAG, "Feedback failed with code: " + response.code() + " Body: " + errorBody);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Feedback failed with code: " + response.code());
-                    }
+                    Log.e(TAG, "Feedback failed with code: " + response.code());
                     Toast.makeText(BookDetailActivity.this, "Failed to submit feedback", Toast.LENGTH_SHORT).show();
                 }
             }

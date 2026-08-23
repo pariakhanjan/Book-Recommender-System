@@ -6,29 +6,32 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bookrecommender.app.R;
 import com.bookrecommender.app.models.Book;
 import com.bookrecommender.app.utils.UserManager;
 import com.bookrecommender.app.viewmodel.BookViewModel;
-
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-
     private static final String TAG = "MainActivity";
     private BookViewModel viewModel;
     private BookAdapter adapter;
     private UserManager userManager;
     private TextView tvWelcome;
+    private Spinner spinnerTopN;
+    private Button btnReload;
+    private int selectedTopN = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,8 +41,7 @@ public class MainActivity extends AppCompatActivity {
         userManager = new UserManager(this);
 
         if (!userManager.isSetupDone()) {
-            Intent intent = new Intent(this, SetupActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, SetupActivity.class));
             finish();
             return;
         }
@@ -47,10 +49,30 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recyclerViewBooks);
         ProgressBar progressBar = findViewById(R.id.progressBar);
         tvWelcome = findViewById(R.id.tvWelcome);
+        spinnerTopN = findViewById(R.id.spinnerTopN);
+        btnReload = findViewById(R.id.btnReload);
 
         if (tvWelcome != null) {
             tvWelcome.setText("Welcome, " + userManager.getUsername() + "!");
         }
+
+        ArrayAdapter<CharSequence> adapterSpinner = ArrayAdapter.createFromResource(this,
+                R.array.top_n_options, android.R.layout.simple_spinner_item);
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTopN.setAdapter(adapterSpinner);
+        spinnerTopN.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedTopN = Integer.parseInt(parent.getItemAtPosition(position).toString());
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) { selectedTopN = 10; }
+        });
+
+        btnReload.setOnClickListener(v -> {
+            Log.d(TAG, "Reloading recommendations with top_n=" + selectedTopN);
+            loadRecommendations();
+        });
 
         adapter = new BookAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -67,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             if (books != null && !books.isEmpty()) {
                 Log.d(TAG, "Books received: " + books.size());
                 adapter.setBooks(books);
-                Toast.makeText(this, books.size() + " personalized recommendations loaded", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, books.size() + " recommendations loaded", Toast.LENGTH_SHORT).show();
             } else {
                 Log.w(TAG, "No books received");
                 Toast.makeText(this, "No recommendations available", Toast.LENGTH_LONG).show();
@@ -77,16 +99,31 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getError().observe(this, error -> {
             if (error != null) {
                 Log.e(TAG, "Error: " + error);
-                Toast.makeText(this, "Error: " + error, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getUserFriendlyError(error), Toast.LENGTH_LONG).show();
             }
         });
 
-        int userId = userManager.getUserId();
-        Log.d(TAG, "Loading recommendations for user: " + userId);
-        viewModel.loadPersonalizedRecommendations(userId, 10, "en");
+        loadRecommendations();
     }
 
-    // منوی بالا برای خروج و ریست
+    private void loadRecommendations() {
+        int userId = userManager.getUserId();
+        Log.d(TAG, "Loading recommendations for user: " + userId + " with top_n=" + selectedTopN);
+        viewModel.loadPersonalizedRecommendations(userId, selectedTopN);
+    }
+
+    private String getUserFriendlyError(String error) {
+        if (error.contains("Network") || error.contains("Unable to resolve host")) {
+            return "Network error. Please check your connection or server status.";
+        } else if (error.contains("404")) {
+            return "User not found. Please log in again.";
+        } else if (error.contains("400")) {
+            return "Please complete your profile setup first.";
+        } else {
+            return "An unexpected error occurred: " + error;
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
@@ -97,8 +134,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_reset) {
             userManager.clearUser();
-            Intent intent = new Intent(this, SetupActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, SetupActivity.class));
             finish();
             return true;
         }

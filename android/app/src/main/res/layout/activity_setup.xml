@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA">
+    android:background="@color/soft_purple">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,8 +16,9 @@
             android:text="Welcome to Book Recommender"
             android:textSize="24sp"
             android:textStyle="bold"
+            android:textColor="@color/primary_purple"
             android:gravity="center"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp" />
 
         <TextView
@@ -25,17 +26,17 @@
             android:layout_height="wrap_content"
             android:text="Let's personalize your experience"
             android:textSize="14sp"
-            android:textColor="#666666"
+            android:textColor="@color/gray_text"
             android:gravity="center"
-            android:layout_marginBottom="32dp" />
+            android:layout_marginBottom="24dp" />
 
-        <!-- Username -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your Username"
+            android:text="Username"
             android:textSize="16sp"
             android:textStyle="bold"
+            android:textColor="@color/primary_blue"
             android:layout_marginBottom="8dp" />
 
         <EditText
@@ -46,16 +47,65 @@
             android:inputType="text"
             android:padding="12dp"
             android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
 
-        <!-- Favorite Genres -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select Your Favorite Genres"
+            android:text="Password"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginBottom="12dp" />
+            android:textColor="@color/primary_blue"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter your password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Preferred Languages (Mandatory)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+            <CheckBox
+                android:id="@+id/chkEn"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="English"
+                android:textColor="@color/black" />
+            <CheckBox
+                android:id="@+id/chkFa"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Persian"
+                android:textColor="@color/black" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Favorite Genres (Optional)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"
+            android:layout_marginBottom="8dp" />
 
         <LinearLayout
             android:id="@+id/genresContainer"
@@ -63,25 +113,24 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginBottom="24dp">
-
-            <CheckBox android:id="@+id/chkFiction" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fiction" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkMystery" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Mystery" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkSciFi" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Science Fiction" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkRomance" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Romance" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkFantasy" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fantasy" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkThriller" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Thriller" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkBiography" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Biography" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkHistory" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="History" android:padding="8dp" />
+            <CheckBox android:id="@+id/chkFiction" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fiction" />
+            <CheckBox android:id="@+id/chkMystery" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Mystery" />
+            <CheckBox android:id="@+id/chkSciFi" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Science Fiction" />
+            <CheckBox android:id="@+id/chkRomance" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Romance" />
+            <CheckBox android:id="@+id/chkFantasy" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fantasy" />
+            <CheckBox android:id="@+id/chkThriller" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Thriller" />
+            <CheckBox android:id="@+id/chkBiography" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Biography" />
+            <CheckBox android:id="@+id/chkHistory" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="History" />
         </LinearLayout>
 
-        <!-- Favorite Authors -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select Your Favorite Authors (Optional)"
+            android:text="Favorite Authors (Optional)"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginBottom="12dp" />
+            android:textColor="@color/primary_blue"
+            android:layout_marginBottom="8dp" />
 
         <LinearLayout
             android:id="@+id/authorsContainer"
@@ -89,24 +138,22 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginBottom="32dp">
-
-            <CheckBox android:id="@+id/chkAuthor1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Stephen King" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkAuthor2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="J.K. Rowling" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkAuthor3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Agatha Christie" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkAuthor4" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="George Orwell" android:padding="8dp" />
-            <CheckBox android:id="@+id/chkAuthor5" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Jane Austen" android:padding="8dp" />
+            <CheckBox android:id="@+id/chkAuthor1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Stephen King" />
+            <CheckBox android:id="@+id/chkAuthor2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="J.K. Rowling" />
+            <CheckBox android:id="@+id/chkAuthor3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Agatha Christie" />
+            <CheckBox android:id="@+id/chkAuthor4" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="George Orwell" />
+            <CheckBox android:id="@+id/chkAuthor5" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Jane Austen" />
         </LinearLayout>
 
-        <!-- Submit Button -->
         <Button
             android:id="@+id/btnSubmit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Get Recommendations"
+            android:text="Complete Setup"
             android:textSize="16sp"
             android:padding="14dp"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF" />
+            android:backgroundTint="@color/primary_purple"
+            android:textColor="@color/white" />
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -114,6 +161,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:visibility="gone"
+            android:indeterminateTint="@color/primary_purple"
             android:layout_marginTop="16dp" />
 
     </LinearLayout>

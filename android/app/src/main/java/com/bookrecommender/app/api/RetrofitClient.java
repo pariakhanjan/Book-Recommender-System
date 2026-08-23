@@ -7,11 +7,16 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import java.util.concurrent.TimeUnit;
 
 public class RetrofitClient {
-    private static final String BASE_URL = "http://192.168.100.5:8000"; // Emulator
     private static Retrofit retrofit = null;
 
     public static Retrofit getClient() {
         if (retrofit == null) {
+            String baseUrl = com.bookrecommender.app.BuildConfig.API_BASE_URL;
+
+            if (!baseUrl.endsWith("/")) {
+                baseUrl += "/";
+            }
+
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
             OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
@@ -19,7 +24,7 @@ public class RetrofitClient {
                     .readTimeout(30, TimeUnit.SECONDS)
                     .addInterceptor(logging);
             retrofit = new Retrofit.Builder()
-                    .baseUrl(BASE_URL)
+                    .baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
                     .client(httpClient.build())
                     .build();
