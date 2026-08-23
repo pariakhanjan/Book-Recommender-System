@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private UserManager userManager;
     private TextView tvWelcome;
     private Spinner spinnerTopN;
-    private Button btnReload;
+    private Button btnReload, btnEditPrefs, btnLogout;
     private int selectedTopN = 10;
 
     @Override
@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
         tvWelcome = findViewById(R.id.tvWelcome);
         spinnerTopN = findViewById(R.id.spinnerTopN);
         btnReload = findViewById(R.id.btnReload);
+        btnEditPrefs = findViewById(R.id.btnEditPrefs);
+        btnLogout = findViewById(R.id.btnLogout);
 
         if (tvWelcome != null) {
             tvWelcome.setText("Welcome, " + userManager.getUsername() + "!");
@@ -66,12 +68,27 @@ public class MainActivity extends AppCompatActivity {
                 selectedTopN = Integer.parseInt(parent.getItemAtPosition(position).toString());
             }
             @Override
-            public void onNothingSelected(AdapterView<?> parent) { selectedTopN = 10; }
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedTopN = 10;
+            }
         });
 
         btnReload.setOnClickListener(v -> {
             Log.d(TAG, "Reloading recommendations with top_n=" + selectedTopN);
             loadRecommendations();
+        });
+
+        btnEditPrefs.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, PreferenceActivity.class);
+            startActivity(intent);
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            userManager.clearUser();
+            Intent intent = new Intent(MainActivity.this, AuthActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
 
         adapter = new BookAdapter(this);

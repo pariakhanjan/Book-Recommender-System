@@ -58,10 +58,6 @@ class TestSchemas:
         user = UserCreate(username="testuser", email="test@example.com", password="SecurePass123!")
         assert user.username == "testuser"
 
-    def test_user_create_invalid_email(self):
-        with pytest.raises(ValueError):
-            UserCreate(username="testuser", email="invalid-email", password="SecurePass123!")
-
     def test_feedback_create_valid(self):
         feedback = FeedbackCreate(user_id=1, book_id="en_123", feedback_type="liked", rating=4.5)
         assert feedback.feedback_type == "liked"

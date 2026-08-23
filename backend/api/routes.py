@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, Depends, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import pandas as pd
-from passlib.context import CryptContext
+import bcrypt
 from utils.logger import logger
 
 from api.schemas import (
@@ -15,15 +14,15 @@ from src.recommender import BookRecommender
 
 router = APIRouter(prefix="/api", tags=["API"])
 recommender = BookRecommender()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
 
 @router.get("/", response_model=dict, tags=["System"])
 def health_check():
@@ -44,13 +43,9 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(UserModel).filter(UserModel.username == user_in.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    if user_in.email:
-        db_email = db.query(UserModel).filter(UserModel.email == user_in.email).first()
-        if db_email:
-            raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_pw = get_password_hash(user_in.password)
-    new_user = UserModel(username=user_in.username, email=user_in.email, hashed_password=hashed_pw)
+    new_user = UserModel(username=user_in.username, hashed_password=hashed_pw)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -175,3 +170,22 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
 def get_popular_books(top_n: int = Query(10, ge=1, le=50), lang: Optional[str] = None):
     languages = [lang] if lang else None
     return recommender.get_popular_books(n=top_n, languages=languages)
+
+@router.get("/search/genres", tags=["Search"])
+def search_genres(q: str = Query(..., min_length=1, description="Search query for genres")):
+    # بازگرداندن ژانرهای یکتا که شامل کوئری هستند
+    genres = recommender.df['clean_genres'].dropna().unique()
+    matched = [g for g in genres if q.lower() in str(g).lower()]
+    return list(set(matched))[:20] # محدود به 20 مورد برای پرفورمنس
+
+@router.get("/search/authors", tags=["Search"])
+def search_authors(q: str = Query(..., min_length=1, description="Search query for authors")):
+    authors = recommender.df['clean_author'].dropna().unique()
+    matched = [a for a in authors if q.lower() in str(a).lower()]
+    return list(set(matched))[:20]
+
+@router.get("/search/books", tags=["Search"])
+def search_books(q: str = Query(..., min_length=1, description="Search query for books")):
+    titles = recommender.df['title'].dropna().unique()
+    matched = [t for t in titles if q.lower() in str(t).lower()]
+    return list(set(matched))[:20]

@@ -24,13 +24,12 @@ class UserModel(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
-    email = Column(String(100), unique=True, index=True, nullable=True)
     hashed_password = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     preference = relationship("UserPreferenceModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
     feedbacks = relationship("UserFeedbackModel", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
-    __table_args__ = (Index('ix_users_username', 'username'), Index('ix_users_email', 'email'))
+    __table_args__ = (Index('ix_users_username', 'username'),)
 
 
 class UserPreferenceModel(Base):

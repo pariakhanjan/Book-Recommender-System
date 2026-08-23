@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/soft_purple"
+    android:fillViewport="true"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set Your Preferences"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_purple"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Language (Mandatory) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Preferred Languages (Mandatory)"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            <CheckBox
+                android:id="@+id/chkEn"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="English" />
+            <CheckBox
+                android:id="@+id/chkFa"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Persian" />
+        </LinearLayout>
+
+        <!-- Liked Genres -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Liked Genres (Search &amp; Select)"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"
+            android:layout_marginTop="8dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type to search genres...">
+            <AutoCompleteTextView
+                android:id="@+id/actvLikedGenres"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvSelectedLikedGenres"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: None"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Liked Authors -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Liked Authors (Search &amp; Select)"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type to search authors...">
+            <AutoCompleteTextView
+                android:id="@+id/actvLikedAuthors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvSelectedLikedAuthors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: None"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Liked Books -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Liked Books (Search &amp; Select)"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type to search books...">
+            <AutoCompleteTextView
+                android:id="@+id/actvLikedBooks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvSelectedLikedBooks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: None"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Disliked Genres -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disliked Genres (Search &amp; Select)"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type to search genres to avoid...">
+            <AutoCompleteTextView
+                android:id="@+id/actvDislikedGenres"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvSelectedDislikedGenres"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: None"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Buttons -->
+        <Button
+            android:id="@+id/btnSaveAndRecommend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save &amp; Get Recommendations"
+            android:backgroundTint="@color/primary_purple"
+            android:textColor="@color/white"
+            android:layout_marginTop="24dp" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:indeterminateTint="@color/primary_purple"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>

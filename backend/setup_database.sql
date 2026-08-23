@@ -1,13 +1,13 @@
--- Drop tables if they exist (optional - for clean setup)
+-- Drop tables if they exist (for clean setup)
 DROP TABLE IF EXISTS user_feedbacks CASCADE;
 DROP TABLE IF EXISTS user_preferences CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
 
 -- Create users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE,
     hashed_password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -38,11 +38,11 @@ CREATE TABLE user_feedbacks (
 );
 
 -- Insert sample users
-INSERT INTO users (username, email, hashed_password, created_at)
+INSERT INTO users (username, hashed_password, created_at)
 VALUES 
-    ('alice', 'alice@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-01 10:00:00'),
-    ('bob', 'bob@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-02 11:30:00'),
-    ('charlie', 'charlie@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-03 14:15:00');
+    ('alice', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-01 10:00:00'),
+    ('bob', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-02 11:30:00'),
+    ('charlie', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-03 14:15:00');
 
 -- Insert sample preferences
 INSERT INTO user_preferences (user_id, preferred_languages, liked_genres, liked_authors, liked_book_ids, disliked_genres)
