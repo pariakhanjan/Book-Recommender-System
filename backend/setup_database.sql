@@ -8,6 +8,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE,
+    hashed_password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -15,6 +16,7 @@ CREATE TABLE users (
 CREATE TABLE user_preferences (
     id SERIAL PRIMARY KEY,
     user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    preferred_languages JSON DEFAULT '[]',
     liked_genres JSON DEFAULT '[]',
     liked_authors JSON DEFAULT '[]',
     liked_book_ids JSON DEFAULT '[]',
@@ -36,18 +38,18 @@ CREATE TABLE user_feedbacks (
 );
 
 -- Insert sample users
-INSERT INTO users (username, email, created_at)
+INSERT INTO users (username, email, hashed_password, created_at)
 VALUES 
-    ('alice', 'alice@example.com', '2026-01-01 10:00:00'),
-    ('bob', 'bob@example.com', '2026-01-02 11:30:00'),
-    ('charlie', 'charlie@example.com', '2026-01-03 14:15:00');
+    ('alice', 'alice@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-01 10:00:00'),
+    ('bob', 'bob@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-02 11:30:00'),
+    ('charlie', 'charlie@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6qY.5M.', '2026-01-03 14:15:00');
 
 -- Insert sample preferences
-INSERT INTO user_preferences (user_id, liked_genres, liked_authors, liked_book_ids, disliked_genres)
+INSERT INTO user_preferences (user_id, preferred_languages, liked_genres, liked_authors, liked_book_ids, disliked_genres)
 VALUES 
-    (1, '["Fantasy", "Science Fiction"]', '["J.K. Rowling", "Suzanne Collins"]', '["en_2767052-the-hunger-games"]', '["Horror"]'),
-    (2, '["Mystery", "Thriller"]', '["Agatha Christie"]', '[]', '[]'),
-    (3, '["Young Adult", "Romance"]', '[]', '["en_2.Harry_Potter_and_the_Order_of_the_Phoenix"]', '["Dystopia"]');
+    (1, '["en"]', '["Fantasy", "Science Fiction"]', '["J.K. Rowling", "Suzanne Collins"]', '["en_2767052-the-hunger-games"]', '["Horror"]'),
+    (2, '["en"]', '["Mystery", "Thriller"]', '["Agatha Christie"]', '[]', '[]'),
+    (3, '["en"]', '["Young Adult", "Romance"]', '[]', '["en_2.Harry_Potter_and_the_Order_of_the_Phoenix"]', '["Dystopia"]');
 
 -- Insert sample feedbacks
 INSERT INTO user_feedbacks (user_id, book_id, feedback_type, rating, comment)

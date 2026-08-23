@@ -27,38 +27,26 @@ async def lifespan(app: FastAPI):
 
     try:
         init_db()
-        db_panel = Panel(
-            "[bold green]✓ Database initialized successfully[/bold green]",
-            border_style="green",
-            padding=(1, 2)
-        )
+        db_panel = Panel("[bold green]Database initialized successfully[/bold green]", border_style="green", padding=(1, 2))
         console.print(db_panel)
     except Exception as e:
-        db_panel = Panel(
-            f"[bold red]✗ Database initialization failed: {e}[/bold red]",
-            border_style="red",
-            padding=(1, 2)
-        )
+        db_panel = Panel(f"[bold red]Database initialization failed: {e}[/bold red]", border_style="red", padding=(1, 2))
         console.print(db_panel)
 
     console.print()
 
-    endpoints_table = Table(title="🔗 Available Endpoints", show_header=False, box=None, padding=(0, 2))
+    endpoints_table = Table(title="Available Endpoints", show_header=False, box=None, padding=(0, 2))
     endpoints_table.add_row("[cyan]API Docs[/cyan]", "[bold green]http://localhost:8000/docs[/bold green]")
     endpoints_table.add_row("[cyan]ReDoc[/cyan]", "[bold green]http://localhost:8000/redoc[/bold green]")
     console.print(endpoints_table)
 
     console.print("\n[bold green]" + "=" * 60 + "[/bold green]")
-    console.print("[bold green]✨ Server is ready to accept requests[/bold green]".center(60))
+    console.print("[bold green]Server is ready to accept requests[/bold green]".center(60))
     console.print("[bold green]" + "=" * 60 + "[/bold green]\n")
 
     yield
 
-    shutdown_panel = Panel(
-        f"[bold yellow]🛑 Shutting down at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}[/bold yellow]",
-        border_style="yellow",
-        padding=(1, 2)
-    )
+    shutdown_panel = Panel(f"[bold yellow]Shutting down at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}[/bold yellow]", border_style="yellow", padding=(1, 2))
     console.print("\n")
     console.print(shutdown_panel)
     console.print()
@@ -84,6 +72,5 @@ app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
-
-    console.print("[bold cyan]🚀 Initializing server...[/bold cyan]\n")
+    console.print("[bold cyan]Initializing server...[/bold cyan]\n")
     uvicorn.run(app, host="0.0.0.0", port=8000)

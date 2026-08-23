@@ -25,6 +25,7 @@ class UserModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=True)
+    hashed_password = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     preference = relationship("UserPreferenceModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -37,6 +38,7 @@ class UserPreferenceModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
 
+    preferred_languages = Column(JSON, default=list, nullable=False)
     liked_genres = Column(JSON, default=list, nullable=False)
     liked_authors = Column(JSON, default=list, nullable=False)
     liked_book_ids = Column(JSON, default=list, nullable=False)
