@@ -6,14 +6,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bookrecommender.app.R;
 import com.bookrecommender.app.api.ApiInterface;
 import com.bookrecommender.app.api.RetrofitClient;
-import com.bookrecommender.app.models.User;
 import com.bookrecommender.app.models.UserPreferences;
 import com.bookrecommender.app.utils.UserManager;
 import java.util.ArrayList;
@@ -24,7 +22,6 @@ import retrofit2.Response;
 
 public class SetupActivity extends AppCompatActivity {
     private static final String TAG = "SetupActivity";
-    private EditText etUsername, etPassword;
     private CheckBox chkEn, chkFa, chkFiction, chkMystery, chkSciFi, chkRomance, chkFantasy, chkThriller, chkBiography, chkHistory;
     private CheckBox chkAuthor1, chkAuthor2, chkAuthor3, chkAuthor4, chkAuthor5;
     private Button btnSubmit;
@@ -40,8 +37,17 @@ public class SetupActivity extends AppCompatActivity {
         apiService = RetrofitClient.getClient().create(ApiInterface.class);
         userManager = new UserManager(this);
 
-        etUsername = findViewById(R.id.etUsername);
-        etPassword = findViewById(R.id.etPassword);
+        if (!userManager.isLoggedIn()) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
+
+        initViews();
+        btnSubmit.setOnClickListener(v -> submitPreferences());
+    }
+
+    private void initViews() {
         chkEn = findViewById(R.id.chkEn);
         chkFa = findViewById(R.id.chkFa);
 
@@ -62,22 +68,9 @@ public class SetupActivity extends AppCompatActivity {
 
         btnSubmit = findViewById(R.id.btnSubmit);
         progressBar = findViewById(R.id.progressBar);
-
-        btnSubmit.setOnClickListener(v -> submitData());
     }
 
-    private void submitData() {
-        String username = etUsername.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Username and password are required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (username.length() < 3) {
-            Toast.makeText(this, "Username must be at least 3 characters", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void submitPreferences() {
         if (!chkEn.isChecked() && !chkFa.isChecked()) {
             Toast.makeText(this, "Please select at least one language", Toast.LENGTH_SHORT).show();
             return;
@@ -107,29 +100,7 @@ public class SetupActivity extends AppCompatActivity {
         btnSubmit.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
 
-        User newUser = new User(username, username + "@example.com", password);
-        apiService.createUser(newUser).enqueue(new Callback<User>() {
-            @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    User createdUser = response.body();
-                    Log.d(TAG, "User created with ID: " + createdUser.getId());
-                    userManager.saveUser(createdUser.getId(), username);
-                    updatePreferences(createdUser.getId(), languages, likedGenres, likedAuthors);
-                } else {
-                    Log.e(TAG, "Create user failed: " + response.code());
-                    Toast.makeText(SetupActivity.this, "Failed to create user. Username may exist.", Toast.LENGTH_SHORT).show();
-                    resetUI();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                Log.e(TAG, "Network error: " + t.getMessage());
-                Toast.makeText(SetupActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                resetUI();
-            }
-        });
+        updatePreferences(userManager.getUserId(), languages, likedGenres, likedAuthors);
     }
 
     private void updatePreferences(int userId, List<String> languages, List<String> genres, List<String> authors) {
@@ -149,13 +120,14 @@ public class SetupActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful()) {
                     Log.d(TAG, "Preferences updated successfully");
+                    userManager.markSetupDone();
                     Toast.makeText(SetupActivity.this, "Setup complete! Welcome!", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(SetupActivity.this, MainActivity.class));
                     finish();
                 } else {
                     Log.e(TAG, "Update preferences failed: " + response.code());
-                    startActivity(new Intent(SetupActivity.this, MainActivity.class));
-                    finish();
+                    Toast.makeText(SetupActivity.this, "Failed to save preferences", Toast.LENGTH_SHORT).show();
+                    resetUI();
                 }
             }
 
@@ -164,6 +136,7 @@ public class SetupActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 Log.e(TAG, "Network error: " + t.getMessage());
                 Toast.makeText(SetupActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                resetUI();
             }
         });
     }

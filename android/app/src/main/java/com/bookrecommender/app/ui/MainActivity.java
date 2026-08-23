@@ -40,8 +40,8 @@ public class MainActivity extends AppCompatActivity {
 
         userManager = new UserManager(this);
 
-        if (!userManager.isSetupDone()) {
-            startActivity(new Intent(this, SetupActivity.class));
+        if (!userManager.isLoggedIn()) {
+            startActivity(new Intent(this, AuthActivity.class));
             finish();
             return;
         }
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_reset) {
             userManager.clearUser();
-            startActivity(new Intent(this, SetupActivity.class));
+            startActivity(new Intent(this, AuthActivity.class));
             finish();
             return true;
         }

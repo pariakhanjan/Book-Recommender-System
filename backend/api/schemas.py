@@ -34,9 +34,9 @@ class PreferenceResponse(PreferenceBase):
 
 
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="Unique username for the account.")
-    email: Optional[str] = Field(None, description="Optional email address.")
-    password: str = Field(..., min_length=6, description="User password (will be hashed before storage).")
+    username: str = Field(..., min_length=3, max_length=50, description="Username must be 3-50 characters")
+    email: Optional[str] = Field(None, description="Optional email address")
+    password: str = Field(..., min_length=6, description="Password must be at least 6 characters")
 
     @field_validator('email')
     @classmethod

@@ -10,6 +10,9 @@ import retrofit2.Call;
 import retrofit2.http.*;
 
 public interface ApiInterface {
+    @POST("/api/auth/login")
+    Call<Map<String, Object>> loginUser(@Body User user);
+
     @POST("/api/users")
     Call<User> createUser(@Body User user);
 

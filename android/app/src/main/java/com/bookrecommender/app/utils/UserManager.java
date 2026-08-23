@@ -7,6 +7,7 @@ public class UserManager {
     private static final String PREFS_NAME = "BookRecommenderPrefs";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USERNAME = "username";
+    private static final String KEY_IS_LOGGED_IN = "is_logged_in";
     private static final String KEY_IS_SETUP_DONE = "is_setup_done";
 
     private final SharedPreferences prefs;
@@ -19,6 +20,12 @@ public class UserManager {
         prefs.edit()
                 .putInt(KEY_USER_ID, userId)
                 .putString(KEY_USERNAME, username)
+                .putBoolean(KEY_IS_LOGGED_IN, true)
+                .apply();
+    }
+
+    public void markSetupDone() {
+        prefs.edit()
                 .putBoolean(KEY_IS_SETUP_DONE, true)
                 .apply();
     }
@@ -29,6 +36,10 @@ public class UserManager {
 
     public String getUsername() {
         return prefs.getString(KEY_USERNAME, "Guest");
+    }
+
+    public boolean isLoggedIn() {
+        return prefs.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
     public boolean isSetupDone() {

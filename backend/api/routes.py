@@ -60,6 +60,29 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     return new_user
 
+
+@router.get("/users/{user_id}", response_model=UserResponse, tags=["Users"])
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.get("/users/{user_id}/preferences", response_model=PreferenceResponse, tags=["Users"])
+def get_user_preferences(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    pref = db.query(UserPreferenceModel).filter(UserPreferenceModel.user_id == user_id).first()
+    if not pref:
+        pref = UserPreferenceModel(user_id=user_id, preferred_languages=[])
+        db.add(pref)
+        db.commit()
+        db.refresh(pref)
+    return pref
+
+
 @router.put("/users/{user_id}/preferences", response_model=PreferenceResponse, tags=["Users"])
 def update_user_preferences(user_id: int, pref_in: PreferenceCreate, db: Session = Depends(get_db)):
     """Updates the user's liked/disliked genres, authors, and books."""
@@ -146,3 +169,9 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
     except Exception as e:
         logger.error(f"Recommendation error for User {user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
+
+
+@router.get("/books/popular", response_model=List[BookResponse], tags=["Books"])
+def get_popular_books(top_n: int = Query(10, ge=1, le=50), lang: Optional[str] = None):
+    languages = [lang] if lang else None
+    return recommender.get_popular_books(n=top_n, languages=languages)
