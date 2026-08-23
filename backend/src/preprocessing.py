@@ -190,7 +190,19 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
             clean_genres_list.append(c_genre)
             clean_descriptions.append(c_desc)
 
-            soup_text = f"{(c_title + ' ') * 3}{(c_author + ' ') * 3}{(c_genre + ' ') * 2}{c_desc}"
+            WEIGHTS = {
+                'title': 2,
+                'author': 2,
+                'genre': 4,
+                'description': 1
+            }
+
+            soup_text = (
+                f"{(c_title + ' ') * WEIGHTS['title']}"
+                f"{(c_author + ' ') * WEIGHTS['author']}"
+                f"{(c_genre + ' ') * WEIGHTS['genre']}"
+                f"{c_desc}"
+            )
             soups.append(soup_text.strip())
 
             progress.update(task, advance=1)
