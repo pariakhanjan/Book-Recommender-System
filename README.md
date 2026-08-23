@@ -1,4 +1,3 @@
-```markdown
 # 📚 Book Recommender System (Backend)
 
 A Content-Based Filtering Book Recommendation System built with **Python**, **FastAPI**, **scikit-learn**, and **PostgreSQL**. 
@@ -151,4 +150,3 @@ When connecting your Android (Java) app to this backend:
 ## 📄 License
 
 This project is licensed under the MIT License.
-```
