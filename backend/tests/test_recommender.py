@@ -49,18 +49,18 @@ class TestBookRecommender:
         assert all('similarity_score' in rec for rec in recommendations)
 
     def test_recommend_by_language(self, recommender):
-        recommendations = recommender.get_popular_books(n=5, lang='fa')
+        recommendations = recommender.get_popular_books(n=5, languages=['fa'])
         assert all(rec['language'] == 'fa' for rec in recommendations)
 
 
 class TestSchemas:
     def test_user_create_valid(self):
-        user = UserCreate(username="testuser", email="test@example.com")
+        user = UserCreate(username="testuser", email="test@example.com", password="SecurePass123!")
         assert user.username == "testuser"
 
     def test_user_create_invalid_email(self):
         with pytest.raises(ValueError):
-            UserCreate(username="testuser", email="invalid-email")
+            UserCreate(username="testuser", email="invalid-email", password="SecurePass123!")
 
     def test_feedback_create_valid(self):
         feedback = FeedbackCreate(user_id=1, book_id="en_123", feedback_type="liked", rating=4.5)
