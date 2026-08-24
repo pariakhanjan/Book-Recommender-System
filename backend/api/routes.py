@@ -20,6 +20,7 @@ def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
@@ -29,6 +30,7 @@ def health_check():
     """Simple health check endpoint to verify API is running."""
     return {"status": "online", "message": "Book Recommender API is running", "version": "2.0.0"}
 
+
 @router.post("/auth/login", tags=["Authentication"])
 def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     """Authenticates a user and returns their ID and username."""
@@ -36,6 +38,7 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
     return {"user_id": user.id, "username": user.username, "message": "Login successful"}
+
 
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags=["Users"])
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
@@ -101,6 +104,7 @@ def update_user_preferences(user_id: int, pref_in: PreferenceCreate, db: Session
     db.refresh(pref)
     return pref
 
+
 @router.post("/feedback", response_model=FeedbackResponse, tags=["Feedback"])
 def submit_feedback(feedback_in: FeedbackCreate, db: Session = Depends(get_db)):
     """Records user feedback and dynamically updates their preference profile."""
@@ -124,6 +128,7 @@ def submit_feedback(feedback_in: FeedbackCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_feedback)
     return new_feedback
+
 
 @router.get(
     "/users/{user_id}/recommendations",
@@ -171,12 +176,14 @@ def get_popular_books(top_n: int = Query(10, ge=1, le=50), lang: Optional[str] =
     languages = [lang] if lang else None
     return recommender.get_popular_books(n=top_n, languages=languages)
 
+
 @router.get("/search/genres", tags=["Search"])
 def search_genres(q: str = Query(..., min_length=1, description="Search query for genres")):
     # بازگرداندن ژانرهای یکتا که شامل کوئری هستند
     genres = recommender.df['clean_genres'].dropna().unique()
     matched = [g for g in genres if q.lower() in str(g).lower()]
-    return list(set(matched))[:20] # محدود به 20 مورد برای پرفورمنس
+    return list(set(matched))[:20]  # محدود به 20 مورد برای پرفورمنس
+
 
 @router.get("/search/authors", tags=["Search"])
 def search_authors(q: str = Query(..., min_length=1, description="Search query for authors")):
@@ -184,8 +191,37 @@ def search_authors(q: str = Query(..., min_length=1, description="Search query f
     matched = [a for a in authors if q.lower() in str(a).lower()]
     return list(set(matched))[:20]
 
+
 @router.get("/search/books", tags=["Search"])
 def search_books(q: str = Query(..., min_length=1, description="Search query for books")):
     titles = recommender.df['title'].dropna().unique()
     matched = [t for t in titles if q.lower() in str(t).lower()]
     return list(set(matched))[:20]
+
+
+@router.get("/search/unique-genres", tags=["Search"])
+def get_unique_genres():
+    """Returns a list of all unique genres from the dataset"""
+    genres = recommender.df['clean_genres'].dropna().unique()
+    # Split compound genres and get unique ones
+    all_genres = set()
+    for genre_str in genres:
+        if isinstance(genre_str, str):
+            for g in genre_str.split():
+                if g.strip():
+                    all_genres.add(g.strip())
+    return sorted(list(all_genres))
+
+
+@router.get("/search/unique-authors", tags=["Search"])
+def get_unique_authors():
+    """Returns a list of all unique authors from the dataset"""
+    authors = recommender.df['clean_author'].dropna().unique()
+    return sorted([a for a in authors if isinstance(a, str) and a.strip()])
+
+
+@router.get("/search/unique-books", tags=["Search"])
+def get_unique_books():
+    """Returns a list of all unique book titles from the dataset"""
+    books = recommender.df['title'].dropna().unique()
+    return sorted([b for b in books if isinstance(b, str) and b.strip()])

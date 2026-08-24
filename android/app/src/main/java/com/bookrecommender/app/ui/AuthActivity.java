@@ -26,10 +26,12 @@ import retrofit2.Response;
 
 public class AuthActivity extends AppCompatActivity {
     private static final String TAG = "AuthActivity";
-    private android.widget.EditText etUsername, etPassword; // تغییر به EditText کامل برای جلوگیری از تداخل
+
+    private android.widget.EditText etUsername, etPassword;
     private Button btnLogin, btnSignup, btnSubmit;
     private ProgressBar progressBar;
     private TextView tvTitle;
+
     private ApiInterface apiService;
     private UserManager userManager;
     private boolean isLoginMode = true;
@@ -114,23 +116,19 @@ public class AuthActivity extends AppCompatActivity {
         apiService.loginUser(loginData).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                progressBar.setVisibility(View.GONE);
+                btnSubmit.setEnabled(true);
+
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse data = response.body();
                     Log.d(TAG, "Login successful for user ID: " + data.getUserId());
                     userManager.saveUser(data.getUserId(), data.getUsername());
                     navigateToNextScreen();
                 } else {
+                    Log.e(TAG, "Login failed: " + response.code());
                     Toast.makeText(AuthActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
                 }
             }
-
-            @Override
-            public void onFailure(Call<LoginResponse> call, Throwable t) {
-                Log.e(TAG, "Network error: " + t.getMessage());
-                Toast.makeText(AuthActivity.this, "Network error", Toast.LENGTH_LONG).show();
-            }
-        });
-    }
 
             @Override
             public void onFailure(Call<LoginResponse> call, Throwable t) {
@@ -141,13 +139,16 @@ public class AuthActivity extends AppCompatActivity {
             }
         });
     }
+
     private void signupUser(String username, String password) {
         UserRegister newUser = new UserRegister(username, password);
+
         apiService.createUser(newUser).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 progressBar.setVisibility(View.GONE);
                 btnSubmit.setEnabled(true);
+
                 if (response.isSuccessful() && response.body() != null) {
                     User createdUser = response.body();
                     Log.d(TAG, "Signup successful for user ID: " + createdUser.getId());

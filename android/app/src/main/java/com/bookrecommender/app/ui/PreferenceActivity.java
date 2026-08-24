@@ -38,14 +38,18 @@ public class PreferenceActivity extends AppCompatActivity {
     private ProgressBar progressBar;
 
     private CheckBox chkEn, chkFa;
-    private AutoCompleteTextView actvLikedGenres, actvLikedAuthors, actvLikedBooks, actvDislikedGenres;
-    private TextView tvSelLikedGenres, tvSelLikedAuthors, tvSelLikedBooks, tvSelDislikedGenres;
+    private AutoCompleteTextView actvLikedGenres, actvLikedAuthors, actvLikedBooks;
+    private AutoCompleteTextView actvDislikedGenres, actvDislikedAuthors, actvDislikedBooks;
+    private TextView tvSelLikedGenres, tvSelLikedAuthors, tvSelLikedBooks;
+    private TextView tvSelDislikedGenres, tvSelDislikedAuthors, tvSelDislikedBooks;
     private Button btnSaveAndRecommend;
 
     private Set<String> selLikedGenres = new HashSet<>();
     private Set<String> selLikedAuthors = new HashSet<>();
     private Set<String> selLikedBooks = new HashSet<>();
     private Set<String> selDislikedGenres = new HashSet<>();
+    private Set<String> selDislikedAuthors = new HashSet<>();
+    private Set<String> selDislikedBooks = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,11 +79,15 @@ public class PreferenceActivity extends AppCompatActivity {
         actvLikedAuthors = findViewById(R.id.actvLikedAuthors);
         actvLikedBooks = findViewById(R.id.actvLikedBooks);
         actvDislikedGenres = findViewById(R.id.actvDislikedGenres);
+        actvDislikedAuthors = findViewById(R.id.actvDislikedAuthors);
+        actvDislikedBooks = findViewById(R.id.actvDislikedBooks);
 
         tvSelLikedGenres = findViewById(R.id.tvSelectedLikedGenres);
         tvSelLikedAuthors = findViewById(R.id.tvSelectedLikedAuthors);
         tvSelLikedBooks = findViewById(R.id.tvSelectedLikedBooks);
         tvSelDislikedGenres = findViewById(R.id.tvSelectedDislikedGenres);
+        tvSelDislikedAuthors = findViewById(R.id.tvSelectedDislikedAuthors);
+        tvSelDislikedBooks = findViewById(R.id.tvSelectedDislikedBooks);
 
         progressBar = findViewById(R.id.progressBar);
         btnSaveAndRecommend = findViewById(R.id.btnSaveAndRecommend);
@@ -89,7 +97,9 @@ public class PreferenceActivity extends AppCompatActivity {
         setupAutoComplete(actvLikedGenres, "genres", selLikedGenres, tvSelLikedGenres);
         setupAutoComplete(actvLikedAuthors, "authors", selLikedAuthors, tvSelLikedAuthors);
         setupAutoComplete(actvLikedBooks, "books", selLikedBooks, tvSelLikedBooks);
-        setupAutoComplete(actvDislikedGenres, "genres", selDislikedGenres, tvSelDislikedGenres);
+        setupAutoComplete(actvDislikedGenres, "disliked-genres", selDislikedGenres, tvSelDislikedGenres);
+        setupAutoComplete(actvDislikedAuthors, "disliked-authors", selDislikedAuthors, tvSelDislikedAuthors);
+        setupAutoComplete(actvDislikedBooks, "disliked-books", selDislikedBooks, tvSelDislikedBooks);
     }
 
     private void setupAutoComplete(AutoCompleteTextView actv, String type, Set<String> selectedSet, TextView tvDisplay) {
@@ -117,9 +127,24 @@ public class PreferenceActivity extends AppCompatActivity {
     private void searchBackend(String type, String query, AutoCompleteTextView actv, Set<String> selectedSet, TextView tvDisplay) {
         Call<List<String>> call = null;
         switch (type) {
-            case "genres": call = apiService.searchGenres(query); break;
-            case "authors": call = apiService.searchAuthors(query); break;
-            case "books": call = apiService.searchBooks(query); break;
+            case "genres":
+                call = apiService.searchGenres(query);
+                break;
+            case "authors":
+                call = apiService.searchAuthors(query);
+                break;
+            case "books":
+                call = apiService.searchBooks(query);
+                break;
+            case "disliked-genres":
+                call = apiService.searchGenres(query);
+                break;
+            case "disliked-authors":
+                call = apiService.searchAuthors(query);
+                break;
+            case "disliked-books":
+                call = apiService.searchBooks(query);
+                break;
         }
 
         if (call != null) {
@@ -127,7 +152,6 @@ public class PreferenceActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<List<String>> call, Response<List<String>> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        // فیلتر کردن آیتم‌هایی که قبلاً انتخاب شده‌اند
                         List<String> suggestions = new ArrayList<>();
                         for (String item : response.body()) {
                             if (!selectedSet.contains(item)) {
@@ -153,7 +177,7 @@ public class PreferenceActivity extends AppCompatActivity {
         if (set.isEmpty()) {
             tv.setText("Selected: None");
         } else {
-            tv.setText("Selected: " + String.join(", ", set));
+            tv.setText("Selected: " + set.size() + " item(s)");
         }
     }
 
@@ -177,6 +201,8 @@ public class PreferenceActivity extends AppCompatActivity {
         prefs.setLikedAuthors(new ArrayList<>(selLikedAuthors));
         prefs.setLikedBookIds(new ArrayList<>(selLikedBooks));
         prefs.setDislikedGenres(new ArrayList<>(selDislikedGenres));
+        prefs.setDislikedAuthors(new ArrayList<>(selDislikedAuthors));
+        prefs.setDislikedBookIds(new ArrayList<>(selDislikedBooks));
 
         apiService.updateUserPreferences(userManager.getUserId(), prefs).enqueue(new Callback<UserPreferences>() {
             @Override

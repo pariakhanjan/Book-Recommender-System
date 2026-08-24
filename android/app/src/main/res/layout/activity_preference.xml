@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/soft_purple"
@@ -17,7 +18,7 @@
             android:text="Set Your Preferences"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@color/primary_purple"
+            android:textColor="@color/black"
             android:gravity="center"
             android:layout_marginBottom="24dp" />
 
@@ -25,9 +26,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Preferred Languages (Mandatory)"
+            android:text="Preferred Languages (Required)"
             android:textStyle="bold"
-            android:textColor="@color/primary_blue"
+            android:textColor="@color/black"
             android:layout_marginBottom="8dp"/>
 
         <LinearLayout
@@ -40,34 +41,39 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="English" />
+                android:text="English"
+                android:textColor="@color/black"/>
             <CheckBox
                 android:id="@+id/chkFa"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Persian" />
+                android:text="Persian"
+                android:textColor="@color/black" />
         </LinearLayout>
 
         <!-- Liked Genres -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Liked Genres (Search &amp; Select)"
+            android:text="Genres I Like (Search &amp; Select)"
             android:textStyle="bold"
-            android:textColor="@color/primary_blue"
+            android:textColor="@color/black"
             android:layout_marginTop="8dp"/>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Type to search genres...">
+            android:hint="Type to search genres..."
+            app:boxStrokeColor="@color/primary_purple"
+            app:hintTextColor="@color/primary_purple">
             <AutoCompleteTextView
                 android:id="@+id/actvLikedGenres"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="text"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
         <TextView
             android:id="@+id/tvSelectedLikedGenres"
@@ -82,20 +88,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Liked Authors (Search &amp; Select)"
+            android:text="Authors I Like (Search &amp; Select)"
             android:textStyle="bold"
-            android:textColor="@color/primary_blue"/>
+            android:textColor="@color/black"/>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Type to search authors...">
+            android:hint="Type to search authors..."
+            app:boxStrokeColor="@color/primary_purple"
+            app:hintTextColor="@color/primary_purple">
             <AutoCompleteTextView
                 android:id="@+id/actvLikedAuthors"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="text"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
         <TextView
             android:id="@+id/tvSelectedLikedAuthors"
@@ -110,20 +119,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Liked Books (Search &amp; Select)"
+            android:text="Books I Like (Search &amp; Select)"
             android:textStyle="bold"
-            android:textColor="@color/primary_blue"/>
+            android:textColor="@color/black"/>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Type to search books...">
+            android:hint="Type to search books..."
+            app:boxStrokeColor="@color/primary_purple"
+            app:hintTextColor="@color/primary_purple">
             <AutoCompleteTextView
                 android:id="@+id/actvLikedBooks"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="text"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
         <TextView
             android:id="@+id/tvSelectedLikedBooks"
@@ -138,23 +150,88 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Disliked Genres (Search &amp; Select)"
+            android:text="Genres I Dislike (Search &amp; Select)"
             android:textStyle="bold"
-            android:textColor="@color/primary_blue"/>
+            android:textColor="@color/black"/>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Type to search genres to avoid...">
+            android:hint="Type to search genres to avoid..."
+            app:boxStrokeColor="#F44336"
+            app:hintTextColor="#F44336">
             <AutoCompleteTextView
                 android:id="@+id/actvDislikedGenres"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="text"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
         <TextView
             android:id="@+id/tvSelectedDislikedGenres"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: None"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Disliked Authors -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Authors I Dislike (Search &amp; Select)"
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type to search authors to avoid..."
+            app:boxStrokeColor="#F44336"
+            app:hintTextColor="#F44336">
+            <AutoCompleteTextView
+                android:id="@+id/actvDislikedAuthors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvSelectedDislikedAuthors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected: None"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Disliked Books -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Books I Dislike (Search &amp; Select)"
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type to search books to avoid..."
+            app:boxStrokeColor="#F44336"
+            app:hintTextColor="#F44336">
+            <AutoCompleteTextView
+                android:id="@+id/actvDislikedBooks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvSelectedDislikedBooks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Selected: None"
@@ -169,7 +246,7 @@
             android:layout_height="wrap_content"
             android:text="Save &amp; Get Recommendations"
             android:backgroundTint="@color/primary_purple"
-            android:textColor="@color/white"
+            android:textColor="@color/gray_text"
             android:layout_marginTop="24dp" />
 
         <ProgressBar

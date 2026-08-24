@@ -39,4 +39,13 @@ public interface ApiInterface {
 
     @GET("/api/search/books")
     Call<List<String>> searchBooks(@Query("q") String query);
+
+    @GET("/api/search/unique-genres")
+    Call<List<String>> getUniqueGenres();
+
+    @GET("/api/search/unique-authors")
+    Call<List<String>> getUniqueAuthors();
+
+    @GET("/api/search/unique-books")
+    Call<List<String>> getUniqueBooks();
 }
