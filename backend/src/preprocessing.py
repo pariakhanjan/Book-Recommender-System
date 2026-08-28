@@ -146,6 +146,8 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     initial_count = len(df)
     df.dropna(subset=['title'], inplace=True)
     df.drop_duplicates(subset=['bookId'], inplace=True)
+    df = df[df['title'].notna() & (df['title'].str.strip() != '')]
+    console.print(f"[yellow]Removed books with empty titles.[/yellow]")
 
     df['title'] = df['title'].fillna('')
     df['author'] = df['author'].fillna('Unknown')
