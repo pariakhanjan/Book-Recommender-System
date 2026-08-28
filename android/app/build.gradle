@@ -97,3 +97,34 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+android.applicationVariants.all { variant ->
+    if (variant.name == "debug") {
+        task("javadoc", type: Javadoc) {
+            description "Generates Javadoc for the debug variant."
+            group = "documentation"
+
+            source = variant.javaCompileProvider.get().source
+
+            classpath = files(variant.javaCompileProvider.get().classpath) + files(android.getBootClasspath())
+
+            destinationDir = file("../android_docs")
+
+            options {
+                encoding = 'UTF-8'
+                charSet = 'UTF-8'
+                author = true
+                version = true
+                use = true
+                windowTitle = "Book Recommender Android API"
+                docTitle = "Book Recommender System - Android Documentation"
+                links("https://developer.android.com/reference")
+            }
+
+            exclude '**/R.java', '**/BuildConfig.java', '**/R$*.java', '**/Manifest.java'
+
+            failOnError = false
+            maxMemory = "1024m"
+        }
+    }
+}

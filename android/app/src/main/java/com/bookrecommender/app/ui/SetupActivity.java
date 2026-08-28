@@ -20,6 +20,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * Initial setup activity where users select their preferred languages,
+ * favorite genres, and authors for the first time.
+ */
 public class SetupActivity extends AppCompatActivity {
     private static final String TAG = "SetupActivity";
     private CheckBox chkEn, chkFa, chkFiction, chkMystery, chkSciFi, chkRomance, chkFantasy, chkThriller, chkBiography, chkHistory;
@@ -47,6 +51,7 @@ public class SetupActivity extends AppCompatActivity {
         btnSubmit.setOnClickListener(v -> submitPreferences());
     }
 
+    /** Initializes all CheckBox and Button views. */
     private void initViews() {
         chkEn = findViewById(R.id.chkEn);
         chkFa = findViewById(R.id.chkFa);
@@ -70,6 +75,7 @@ public class SetupActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
     }
 
+    /** Validates UI inputs and triggers the preference update process. */
     private void submitPreferences() {
         if (!chkEn.isChecked() && !chkFa.isChecked()) {
             Toast.makeText(this, "Please select at least one language", Toast.LENGTH_SHORT).show();
@@ -103,6 +109,13 @@ public class SetupActivity extends AppCompatActivity {
         updatePreferences(userManager.getUserId(), languages, likedGenres, likedAuthors);
     }
 
+    /**
+     * Sends the collected preferences to the backend.
+     * @param userId The ID of the current user.
+     * @param languages Selected languages.
+     * @param genres Selected genres.
+     * @param authors Selected authors.
+     */
     private void updatePreferences(int userId, List<String> languages, List<String> genres, List<String> authors) {
         UserPreferences prefs = new UserPreferences();
         prefs.setUserId(userId);
@@ -141,6 +154,7 @@ public class SetupActivity extends AppCompatActivity {
         });
     }
 
+    /** Resets the UI to its initial state in case of an error. */
     private void resetUI() {
         btnSubmit.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);

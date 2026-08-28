@@ -20,6 +20,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * Activity displaying detailed information about a specific book.
+ * Allows the user to submit "liked" or "disliked" feedback to the backend.
+ */
 public class BookDetailActivity extends AppCompatActivity {
     private static final String TAG = "BookDetailActivity";
     private Book book;
@@ -45,6 +49,7 @@ public class BookDetailActivity extends AppCompatActivity {
         setupClickListeners();
     }
 
+    /** Initializes and populates the UI views with book data. */
     private void initViews() {
         ImageView ivCover = findViewById(R.id.ivBookCover);
         TextView tvTitle = findViewById(R.id.tvBookTitle);
@@ -64,6 +69,7 @@ public class BookDetailActivity extends AppCompatActivity {
         }
     }
 
+    /** Sets up click listeners for the Like and Dislike buttons. */
     private void setupClickListeners() {
         Button btnLike = findViewById(R.id.btnLike);
         Button btnDislike = findViewById(R.id.btnDislike);
@@ -72,6 +78,10 @@ public class BookDetailActivity extends AppCompatActivity {
         btnDislike.setOnClickListener(v -> sendFeedback("disliked"));
     }
 
+    /**
+     * Sends user feedback (liked/disliked) to the backend API.
+     * @param feedbackType The type of feedback ("liked" or "disliked").
+     */
     private void sendFeedback(String feedbackType) {
         Log.d(TAG, "Sending feedback: " + feedbackType + " for book: " + book.getBookId());
         TextView tvFeedback = findViewById(R.id.tvFeedbackMessage);

@@ -151,7 +151,9 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_reset) {
             userManager.clearUser();
-            startActivity(new Intent(this, AuthActivity.class));
+            Intent intent = new Intent(this, AuthActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
             finish();
             return true;
         }

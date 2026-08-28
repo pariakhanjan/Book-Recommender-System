@@ -1,13 +1,14 @@
 package com.bookrecommender.app.models;
+import com.google.gson.annotations.SerializedName;
 
 public class FeedbackRequest {
-    private int user_id;
-    private String book_id;
-    private String feedback_type;
+    @SerializedName("user_id") private int userId;
+    @SerializedName("book_id") private String bookId;
+    @SerializedName("feedback_type") private String feedbackType;
 
-    public FeedbackRequest(int user_id, String book_id, String feedback_type) {
-        this.user_id = user_id;
-        this.book_id = book_id;
-        this.feedback_type = feedback_type;
+    public FeedbackRequest(int userId, String bookId, String feedbackType) {
+        this.userId = userId;
+        this.bookId = bookId;
+        this.feedbackType = feedbackType;
     }
 }

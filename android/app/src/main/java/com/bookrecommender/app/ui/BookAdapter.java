@@ -19,6 +19,9 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * RecyclerView Adapter for displaying a list of recommended books.
+ */
 public class BookAdapter extends RecyclerView.Adapter<BookAdapter.BookViewHolder> {
 
     private static final String TAG = "BookAdapter";

@@ -12,7 +12,11 @@ import java.util.Map;
 import retrofit2.Call;
 import retrofit2.http.*;
 
+/**
+ * Retrofit API Interface defining all backend endpoints.
+ */
 public interface ApiInterface {
+
     @POST("/api/auth/login")
     Call<LoginResponse> loginUser(@Body UserLogin userLogin);
 
@@ -31,21 +35,27 @@ public interface ApiInterface {
     @GET("/api/users/{user_id}/recommendations")
     Call<List<Book>> getUserRecommendations(@Path("user_id") int userId, @Query("top_n") int topN);
 
+    /**
+     * Searches for genres from the clean vocabulary JSON.
+     * @param query The search string (min 1 char).
+     * @return List of matching genres.
+     */
     @GET("/api/search/genres")
     Call<List<String>> searchGenres(@Query("q") String query);
 
+    /**
+     * Searches for authors from the clean vocabulary JSON.
+     * @param query The search string (min 1 char).
+     * @return List of matching authors.
+     */
     @GET("/api/search/authors")
     Call<List<String>> searchAuthors(@Query("q") String query);
 
+    /**
+     * Searches for book titles from the clean vocabulary JSON.
+     * @param query The search string (min 1 char).
+     * @return List of matching book titles.
+     */
     @GET("/api/search/books")
     Call<List<String>> searchBooks(@Query("q") String query);
-
-    @GET("/api/search/unique-genres")
-    Call<List<String>> getUniqueGenres();
-
-    @GET("/api/search/unique-authors")
-    Call<List<String>> getUniqueAuthors();
-
-    @GET("/api/search/unique-books")
-    Call<List<String>> getUniqueBooks();
 }

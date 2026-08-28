@@ -12,6 +12,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * ViewModel responsible for fetching and managing book recommendation data.
+ */
 public class BookViewModel extends ViewModel {
     private static final String TAG = "BookViewModel";
     private final MutableLiveData<List<Book>> books = new MutableLiveData<>();
@@ -23,6 +26,11 @@ public class BookViewModel extends ViewModel {
     public LiveData<Boolean> getIsLoading() { return isLoading; }
     public LiveData<String> getError() { return error; }
 
+    /**
+     * Fetches personalized recommendations for a specific user.
+     * @param userId The ID of the user.
+     * @param topN The number of recommendations to fetch.
+     */
     public void loadPersonalizedRecommendations(int userId, int topN) {
         Log.d(TAG, "Loading personalized recommendations for user: " + userId + ", top_n: " + topN);
         isLoading.setValue(true);

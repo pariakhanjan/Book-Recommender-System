@@ -3,6 +3,9 @@ package com.bookrecommender.app.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+/**
+ * Utility class for managing user session state using SharedPreferences.
+ */
 public class UserManager {
     private static final String PREFS_NAME = "BookRecommenderPrefs";
     private static final String KEY_USER_ID = "user_id";
@@ -25,26 +28,13 @@ public class UserManager {
     }
 
     public void markSetupDone() {
-        prefs.edit()
-                .putBoolean(KEY_IS_SETUP_DONE, true)
-                .apply();
+        prefs.edit().putBoolean(KEY_IS_SETUP_DONE, true).apply();
     }
 
-    public int getUserId() {
-        return prefs.getInt(KEY_USER_ID, -1);
-    }
-
-    public String getUsername() {
-        return prefs.getString(KEY_USERNAME, "Guest");
-    }
-
-    public boolean isLoggedIn() {
-        return prefs.getBoolean(KEY_IS_LOGGED_IN, false);
-    }
-
-    public boolean isSetupDone() {
-        return prefs.getBoolean(KEY_IS_SETUP_DONE, false);
-    }
+    public int getUserId() { return prefs.getInt(KEY_USER_ID, -1); }
+    public String getUsername() { return prefs.getString(KEY_USERNAME, "Guest"); }
+    public boolean isLoggedIn() { return prefs.getBoolean(KEY_IS_LOGGED_IN, false); }
+    public boolean isSetupDone() { return prefs.getBoolean(KEY_IS_SETUP_DONE, false); }
 
     public void clearUser() {
         prefs.edit().clear().apply();

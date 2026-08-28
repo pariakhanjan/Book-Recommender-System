@@ -3,6 +3,10 @@ package com.bookrecommender.app.models;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
+/**
+ * Model class representing a user's reading preferences, including languages,
+ * liked/disliked genres, authors, and specific book IDs.
+ */
 public class UserPreferences {
     @SerializedName("id") private int id;
     @SerializedName("user_id") private int userId;

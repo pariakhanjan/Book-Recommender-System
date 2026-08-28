@@ -3,6 +3,10 @@ package com.bookrecommender.app.models;
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
+/**
+ * Represents a Book entity returned by the recommendation API.
+ * Implements Serializable to allow passing via Intent extras.
+ */
 public class Book implements Serializable {
     @SerializedName("bookId") private String bookId;
     @SerializedName("title") private String title;

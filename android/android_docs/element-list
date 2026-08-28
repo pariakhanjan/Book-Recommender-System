@@ -1,0 +1,7 @@
+com.bookrecommender.app
+com.bookrecommender.app.api
+com.bookrecommender.app.databinding
+com.bookrecommender.app.models
+com.bookrecommender.app.ui
+com.bookrecommender.app.utils
+com.bookrecommender.app.viewmodel

@@ -24,6 +24,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * Activity handling user authentication (Login and Sign Up).
+ * Manages UI state transitions and communicates with the backend for auth.
+ */
 public class AuthActivity extends AppCompatActivity {
     private static final String TAG = "AuthActivity";
 
@@ -171,7 +175,7 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void navigateToNextScreen() {
-        Intent intent = new Intent(this, PreferenceActivity.class);
+        Intent intent = new Intent(this, userManager.isSetupDone() ? MainActivity.class : PreferenceActivity.class);
         startActivity(intent);
         finish();
     }

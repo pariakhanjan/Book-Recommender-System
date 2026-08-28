@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.bookrecommender.app"},{"l":"com.bookrecommender.app.api"},{"l":"com.bookrecommender.app.databinding"},{"l":"com.bookrecommender.app.models"},{"l":"com.bookrecommender.app.ui"},{"l":"com.bookrecommender.app.utils"},{"l":"com.bookrecommender.app.viewmodel"}];updateSearchResults();

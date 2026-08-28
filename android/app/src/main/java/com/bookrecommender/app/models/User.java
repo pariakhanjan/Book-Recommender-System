@@ -2,6 +2,10 @@ package com.bookrecommender.app.models;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Model class representing a User entity returned by the backend.
+ * Note: Password field is included for completeness but should not be exposed in UI.
+ */
 public class User {
     @SerializedName("id") private int id;
     @SerializedName("username") private String username;

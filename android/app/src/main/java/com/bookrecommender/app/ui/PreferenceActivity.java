@@ -31,6 +31,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * Activity for managing user reading preferences, including language selection
+ * and dynamic search for liked/disliked genres, authors, and books.
+ */
 public class PreferenceActivity extends AppCompatActivity {
     private static final String TAG = "PreferenceActivity";
     private ApiInterface apiService;
@@ -50,6 +54,8 @@ public class PreferenceActivity extends AppCompatActivity {
     private Set<String> selDislikedGenres = new HashSet<>();
     private Set<String> selDislikedAuthors = new HashSet<>();
     private Set<String> selDislikedBooks = new HashSet<>();
+
+    private Call<List<String>> currentSearchCall = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,32 +131,24 @@ public class PreferenceActivity extends AppCompatActivity {
     }
 
     private void searchBackend(String type, String query, AutoCompleteTextView actv, Set<String> selectedSet, TextView tvDisplay) {
-        Call<List<String>> call = null;
-        switch (type) {
-            case "genres":
-                call = apiService.searchGenres(query);
-                break;
-            case "authors":
-                call = apiService.searchAuthors(query);
-                break;
-            case "books":
-                call = apiService.searchBooks(query);
-                break;
-            case "disliked-genres":
-                call = apiService.searchGenres(query);
-                break;
-            case "disliked-authors":
-                call = apiService.searchAuthors(query);
-                break;
-            case "disliked-books":
-                call = apiService.searchBooks(query);
-                break;
+        if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
+            currentSearchCall.cancel();
         }
 
-        if (call != null) {
-            call.enqueue(new Callback<List<String>>() {
+        Call<List<String>> call = null;
+        switch (type) {
+            case "genres": case "disliked-genres": call = apiService.searchGenres(query); break;
+            case "authors": case "disliked-authors": call = apiService.searchAuthors(query); break;
+            case "books": case "disliked-books": call = apiService.searchBooks(query); break;
+        }
+
+        if (call !=0) {
+            currentSearchCall = call;
+            currentSearchCall.enqueue(new Callback<List<String>>() {
                 @Override
                 public void onResponse(Call<List<String>> call, Response<List<String>> response) {
+                    if (call.isCanceled()) return; // Ignore if canceled
+
                     if (response.isSuccessful() && response.body() != null) {
                         List<String> suggestions = new ArrayList<>();
                         for (String item : response.body()) {
@@ -165,8 +163,10 @@ public class PreferenceActivity extends AppCompatActivity {
                         actv.showDropDown();
                     }
                 }
+
                 @Override
                 public void onFailure(Call<List<String>> call, Throwable t) {
+                    if (call.isCanceled()) return; // Ignore cancellation errors
                     Log.e(TAG, "Search failed: " + t.getMessage());
                 }
             });
@@ -174,11 +174,7 @@ public class PreferenceActivity extends AppCompatActivity {
     }
 
     private void updateDisplayText(Set<String> set, TextView tv) {
-        if (set.isEmpty()) {
-            tv.setText("Selected: None");
-        } else {
-            tv.setText("Selected: " + set.size() + " item(s)");
-        }
+        tv.setText(set.isEmpty() ? "Selected: None" : "Selected: " + set.size() + " item(s)");
     }
 
     private void savePreferencesAndProceed() {
