@@ -8,7 +8,7 @@ from datetime import datetime
 
 class PreferenceBase(BaseModel):
     """Base schema for user reading preferences."""
-    preferred_languages: List[str] = Field(..., min_length=1, description="List of preferred languages (e.g., ['en', 'fa']). Mandatory for recommendations.")
+    preferred_languages: List[str] = Field(default_factory=list, description="List of preferred languages (e.g., ['en', 'fa']). Mandatory for recommendations.")
     liked_genres: List[str] = Field(default_factory=list, description="List of genres the user likes.")
     liked_authors: List[str] = Field(default_factory=list, description="List of authors the user likes.")
     liked_book_ids: List[str] = Field(default_factory=list, description="List of specific book IDs the user has liked.")

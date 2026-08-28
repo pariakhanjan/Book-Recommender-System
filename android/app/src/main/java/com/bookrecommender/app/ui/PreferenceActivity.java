@@ -73,8 +73,63 @@ public class PreferenceActivity extends AppCompatActivity {
 
         initViews();
         setupSearchListeners();
+        loadExistingPreferences();
 
         btnSaveAndRecommend.setOnClickListener(v -> savePreferencesAndProceed());
+    }
+
+    private void loadExistingPreferences() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        apiService.getUserPreferences(userManager.getUserId()).enqueue(new Callback<UserPreferences>() {
+            @Override
+            public void onResponse(Call<UserPreferences> call, Response<UserPreferences> response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    UserPreferences prefs = response.body();
+
+                    if (prefs.getPreferredLanguages() != null) {
+                        if (prefs.getPreferredLanguages().contains("en")) chkEn.setChecked(true);
+                        if (prefs.getPreferredLanguages().contains("fa")) chkFa.setChecked(true);
+                    }
+
+                    // Load liked items
+                    if (prefs.getLikedGenres() != null) {
+                        selLikedGenres.addAll(prefs.getLikedGenres());
+                        updateDisplayText(selLikedGenres, tvSelLikedGenres);
+                    }
+                    if (prefs.getLikedAuthors() != null) {
+                        selLikedAuthors.addAll(prefs.getLikedAuthors());
+                        updateDisplayText(selLikedAuthors, tvSelLikedAuthors);
+                    }
+                    if (prefs.getLikedBookIds() != null) {
+                        selLikedBooks.addAll(prefs.getLikedBookIds());
+                        updateDisplayText(selLikedBooks, tvSelLikedBooks);
+                    }
+
+                    if (prefs.getDislikedGenres() != null) {
+                        selDislikedGenres.addAll(prefs.getDislikedGenres());
+                        updateDisplayText(selDislikedGenres, tvSelDislikedGenres);
+                    }
+                    if (prefs.getDislikedAuthors() != null) {
+                        selDislikedAuthors.addAll(prefs.getDislikedAuthors());
+                        updateDisplayText(selDislikedAuthors, tvSelDislikedAuthors);
+                    }
+                    if (prefs.getDislikedBookIds() != null) {
+                        selDislikedBooks.addAll(prefs.getDislikedBookIds());
+                        updateDisplayText(selDislikedBooks, tvSelDislikedBooks);
+                    }
+
+                    Log.d(TAG, "Loaded existing preferences for user " + userManager.getUserId());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserPreferences> call, Throwable t) {
+                progressBar.setVisibility(View.GONE);
+                Log.e(TAG, "Failed to load preferences: " + t.getMessage());
+            }
+        });
     }
 
     private void initViews() {
@@ -97,6 +152,15 @@ public class PreferenceActivity extends AppCompatActivity {
 
         progressBar = findViewById(R.id.progressBar);
         btnSaveAndRecommend = findViewById(R.id.btnSaveAndRecommend);
+
+        TextView tvCancelAndLogout = findViewById(R.id.tvCancelAndLogout);
+        tvCancelAndLogout.setOnClickListener(v -> {
+            userManager.clearUser();
+            Intent intent = new Intent(this, AuthActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void setupSearchListeners() {
@@ -142,7 +206,7 @@ public class PreferenceActivity extends AppCompatActivity {
             case "books": case "disliked-books": call = apiService.searchBooks(query); break;
         }
 
-        if (call !=0) {
+        if (call != null) {
             currentSearchCall = call;
             currentSearchCall.enqueue(new Callback<List<String>>() {
                 @Override
@@ -174,7 +238,36 @@ public class PreferenceActivity extends AppCompatActivity {
     }
 
     private void updateDisplayText(Set<String> set, TextView tv) {
-        tv.setText(set.isEmpty() ? "Selected: None" : "Selected: " + set.size() + " item(s)");
+        if (set.isEmpty()) {
+            tv.setText("✦ Selected: None");
+        } else {
+            StringBuilder sb = new StringBuilder("✦ Selected: ");
+            int count = 0;
+            for (String item : set) {
+                if (count > 0) sb.append(", ");
+                sb.append(formatDisplayName(item));
+                count++;
+            }
+            tv.setText(sb.toString());
+        }
+    }
+
+    private String formatDisplayName(String name) {
+        if (name == null || name.isEmpty()) return "";
+
+        name = name.replaceAll("\\(.*?\\)", "").trim();
+
+        String result = name.replaceAll("([a-z])([A-Z])", "$1 $2");
+
+        StringBuilder sb = new StringBuilder();
+        for (String word : result.split("\\s+")) {
+            if (!word.isEmpty()) {
+                sb.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1).toLowerCase())
+                        .append(" ");
+            }
+        }
+        return sb.toString().trim();
     }
 
     private void savePreferencesAndProceed() {

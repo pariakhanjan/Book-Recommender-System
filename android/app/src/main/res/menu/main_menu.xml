@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/action_reset"
-        android:title="Reset Profile"
+        android:title="✦ Logout &amp; Reset ✦"
         android:icon="@android:drawable/ic_menu_revert"
         app:showAsAction="ifRoom" />
 

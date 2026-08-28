@@ -19,6 +19,7 @@ import com.bookrecommender.app.models.User;
 import com.bookrecommender.app.models.UserLogin;
 import com.bookrecommender.app.models.UserRegister;
 import com.bookrecommender.app.utils.UserManager;
+import com.bookrecommender.app.models.UserPreferences;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -175,8 +176,36 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void navigateToNextScreen() {
-        Intent intent = new Intent(this, userManager.isSetupDone() ? MainActivity.class : PreferenceActivity.class);
-        startActivity(intent);
-        finish();
+        int userId = userManager.getUserId();
+        apiService.getUserPreferences(userId).enqueue(new Callback<UserPreferences>() {
+            @Override
+            public void onResponse(Call<UserPreferences> call, Response<UserPreferences> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    UserPreferences prefs = response.body();
+                    if (prefs.getPreferredLanguages() != null && !prefs.getPreferredLanguages().isEmpty()) {
+                        userManager.markSetupDone();
+                        Intent intent = new Intent(AuthActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Intent intent = new Intent(AuthActivity.this, PreferenceActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                } else {
+                    Intent intent = new Intent(AuthActivity.this, PreferenceActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserPreferences> call, Throwable t) {
+                Log.e(TAG, "Failed to fetch preferences: " + t.getMessage());
+                Intent intent = new Intent(AuthActivity.this, PreferenceActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 }

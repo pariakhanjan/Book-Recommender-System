@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from pathlib import Path
 import json
+import math
+import pandas as pd
 import bcrypt
 from utils.logger import logger
 from src.config import CLEAN_VOCABULARY_PATH
@@ -50,6 +52,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         bool: True if the password matches, False otherwise.
     """
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+
+def clean_nan_value(val, default=""):
+    """Safely converts NaN or None to a default string/value."""
+    if val is None:
+        return default
+    if isinstance(val, float) and math.isnan(val):
+        return default
+    if isinstance(val, str) and val.lower().strip() == 'nan':
+        return default
+    return val
 
 
 @router.get("/", response_model=dict, tags=["System"])
@@ -237,9 +250,7 @@ def submit_feedback(feedback_in: FeedbackCreate, db: Session = Depends(get_db)) 
     response_model=List[BookResponse],
     tags=["Recommendations"],
     summary="Get Personalized Recommendations",
-    description="Retrieves top N book recommendations based on the user's profile. "
-                "Applies research-backed weights to liked/disliked items. "
-                "Triggers Cold Start fallback to popular books if the profile is empty.",
+    description="Retrieves top N book recommendations based on the user's profile.",
     responses={
         200: {"description": "Successfully retrieved recommendations"},
         400: {"description": "User has not selected preferred languages yet"},
@@ -257,11 +268,11 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
 
     pref = db.query(UserPreferenceModel).filter(UserPreferenceModel.user_id == user_id).first()
     if not pref or not pref.preferred_languages:
-        logger.warning(f"COLD START BLOCKED: User {user_id} has not selected preferred languages.")
-        raise HTTPException(status_code=400, detail="Preferred languages must be set to get recommendations")
+        logger.warning(f"COLD START TRIGGERED: User profile empty. Falling back to popular books.")
+        return get_popular_books(top_n=top_n, lang=None)
 
     try:
-        return recommender.recommend_user_profile(
+        recommendations = recommender.recommend_user_profile(
             preferred_languages=pref.preferred_languages,
             favorite_genres=pref.liked_genres or [],
             favorite_authors=pref.liked_authors or [],
@@ -271,6 +282,23 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
             disliked_book_ids=pref.disliked_book_ids or [],
             top_n=top_n
         )
+
+        cleaned_recommendations = []
+        for rec in recommendations:
+            cleaned_rec = {
+                'bookId': str(clean_nan_value(rec.get('bookId'), '')),
+                'title': str(clean_nan_value(rec.get('title'), '')),
+                'author': str(clean_nan_value(rec.get('author'), '')),
+                'genres': str(clean_nan_value(rec.get('genres'), '')),
+                'rating': float(clean_nan_value(rec.get('rating'), 0.0)),
+                'coverImg': str(clean_nan_value(rec.get('coverImg'), '')),
+                'language': str(clean_nan_value(rec.get('language'), 'en')),
+                'similarity_score': float(clean_nan_value(rec.get('similarity_score'), 0.0))
+            }
+            cleaned_recommendations.append(cleaned_rec)
+
+        return cleaned_recommendations
+
     except Exception as e:
         logger.error(f"Recommendation error for User {user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
@@ -278,9 +306,24 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
 
 @router.get("/books/popular", response_model=List[BookResponse], tags=["Books"])
 def get_popular_books(top_n: int = Query(10, ge=1, le=50), lang: Optional[str] = None) -> List[dict]:
-    """Retrieves popular books, optionally filtered by language."""
     languages = [lang] if lang else None
-    return recommender.get_popular_books(n=top_n, languages=languages)
+    recommendations = recommender.get_popular_books(n=top_n, languages=languages)
+
+    cleaned_recommendations = []
+    for rec in recommendations:
+        cleaned_rec = {
+            'bookId': str(clean_nan_value(rec.get('bookId'), '')),
+            'title': str(clean_nan_value(rec.get('title'), '')),
+            'author': str(clean_nan_value(rec.get('author'), '')),
+            'genres': str(clean_nan_value(rec.get('genres'), '')),
+            'rating': float(clean_nan_value(rec.get('rating'), 0.0)),
+            'coverImg': str(clean_nan_value(rec.get('coverImg'), '')),
+            'language': str(clean_nan_value(rec.get('language'), 'en')),
+            'similarity_score': 0.0
+        }
+        cleaned_recommendations.append(cleaned_rec)
+
+    return cleaned_recommendations
 
 
 @router.get("/search/unique-genres", tags=["Search"])

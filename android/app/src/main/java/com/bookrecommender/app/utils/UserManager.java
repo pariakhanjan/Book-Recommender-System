@@ -37,6 +37,11 @@ public class UserManager {
     public boolean isSetupDone() { return prefs.getBoolean(KEY_IS_SETUP_DONE, false); }
 
     public void clearUser() {
-        prefs.edit().clear().apply();
+        prefs.edit()
+                .remove(KEY_USER_ID)
+                .remove(KEY_USERNAME)
+                .putBoolean(KEY_IS_LOGGED_IN, false)
+                .putBoolean(KEY_IS_SETUP_DONE, false)
+                .apply();
     }
 }

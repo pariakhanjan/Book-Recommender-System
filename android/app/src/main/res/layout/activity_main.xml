@@ -43,9 +43,11 @@
             android:id="@+id/spinnerTopN"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_marginEnd="8dp"
-            android:backgroundTint="@color/primary_purple" />
+            android:background="@drawable/spinner_background_purple"
+            android:popupBackground="@color/soft_purple"
+            android:spinnerMode="dropdown" />
 
         <Button
             android:id="@+id/btnReload"
@@ -54,7 +56,7 @@
             android:layout_height="wrap_content"
             android:text="Reload"
             android:backgroundTint="@color/primary_purple"
-            android:textColor="@color/gray_text" />
+            android:textColor="@color/white" />
     </LinearLayout>
 
     <LinearLayout
@@ -72,10 +74,10 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Edit Preferences"
+            android:text="Edit Prefs"
             android:layout_marginEnd="8dp"
             android:backgroundTint="@color/primary_blue"
-            android:textColor="@color/gray_text" />
+            android:textColor="@color/white" />
 
         <Button
             android:id="@+id/btnLogout"
@@ -84,8 +86,8 @@
             android:layout_height="wrap_content"
             android:text="Logout"
             android:layout_marginStart="8dp"
-            android:backgroundTint="#F44336"
-            android:textColor="@color/gray_text" />
+            android:backgroundTint="#E57373"
+            android:textColor="@color/white" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

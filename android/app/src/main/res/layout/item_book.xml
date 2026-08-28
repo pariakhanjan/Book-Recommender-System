@@ -5,8 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
     app:cardBackgroundColor="@color/white">
 
     <LinearLayout
@@ -45,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
-                android:textColor="@color/gray_text"
+                android:textColor="#666666"
                 android:layout_marginTop="4dp" />
 
             <TextView
@@ -53,9 +53,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
+                android:textStyle="bold"
                 android:textColor="@color/rating_color"
-                android:layout_marginTop="4dp" />
-
+                android:layout_marginTop="8dp"
+                android:text="✦ Rating: 0.0" />
         </LinearLayout>
 
     </LinearLayout>

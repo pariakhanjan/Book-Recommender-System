@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import ast
 import re
@@ -7,15 +8,17 @@ from pathlib import Path
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from src.config import RAW_DATA_PATH_EN, RAW_DATA_PATH_FA, PROCESSED_DATA_PATH
 from utils.logger import logger, console
+from langdetect import detect, LangDetectException
 
 try:
-    from hazm import Normalizer, StopwordRemover, Lemmatizer
+    from hazm import Normalizer, Lemmatizer, stopwords_list
 
     HAZM_AVAILABLE = True
     console.print("[bold green]Hazm library loaded successfully.[/bold green]")
-except ImportError:
+except ImportError as e:
     HAZM_AVAILABLE = False
-    logger.warning("Hazm not found. Persian cleaning will use basic rules.")
+    logger.warning(f"Hazm import failed with error: {e}")
+    logger.warning("Persian cleaning will use basic rules.")
 
 ENGLISH_STOPWORDS = {"i", "me", "my", "we", "our", "you", "your", "he", "him", "his", "she", "her", "it", "its", "they",
                      "them", "their", "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is",
@@ -34,8 +37,8 @@ class TextCleaner:
     def __init__(self):
         if HAZM_AVAILABLE:
             self.normalizer = Normalizer()
-            self.stopword_remover = StopwordRemover()
             self.lemmatizer = Lemmatizer()
+            self.persian_stopwords = set(stopwords_list())
 
     def clean_english_text(self, text: str) -> str:
         """Cleans and tokenizes English text by removing punctuation and stopwords."""
@@ -50,23 +53,51 @@ class TextCleaner:
         if HAZM_AVAILABLE:
             text = self.normalizer.normalize(text)
             text = re.sub(r'[^\w\s]', '', text)
-            tokens = self.stopword_remover.remove(text.split())
-            return " ".join([self.lemmatizer.lemmatize(w) for w in tokens if len(w) > 2])
+            tokens = text.split()
+            tokens = [w for w in tokens if w not in self.persian_stopwords and len(w) > 2]
+            return " ".join([self.lemmatizer.lemmatize(w) for w in tokens])
         else:
             text = text.replace("ي", "ی").replace("ك", "ک")
             text = re.sub(r'[^\w\s]', '', text)
             return " ".join([w for w in text.split() if w not in PERSIAN_STOPWORDS and len(w) > 2])
 
+    def clean_persian_text_simple(self, text: str) -> str:
+        if pd.isna(text) or not text: return ""
+        text = str(text)
+        if HAZM_AVAILABLE:
+            text = self.normalizer.normalize(text)
+            text = re.sub(r'[^\w\s]', '', text)
+            return " ".join([w for w in text.split() if len(w) > 1])
+        else:
+            text = text.replace("ي", "ی").replace("ك", "ک")
+            text = re.sub(r'[^\w\s]', '', text)
+            return " ".join([w for w in text.split() if len(w) > 1])
+
     def clean_genres(self, genre_str: str) -> str:
-        """Parses and cleans genre strings, removing spaces for consistency."""
+        """Parses and cleans genre strings, preserving spaces between words."""
         if pd.isna(genre_str) or not genre_str: return ""
         try:
             genres = ast.literal_eval(genre_str)
             if isinstance(genres, list):
-                return " ".join([str(g).replace(" ", "").lower() for g in genres if g])
+                return " ".join([str(g).strip().lower() for g in genres if g])
         except (ValueError, SyntaxError):
-            return str(genre_str).replace(" ", "").lower().strip('[]')
+            return str(genre_str).lower().strip('[]')
         return ""
+
+
+def is_english_title(title: str) -> bool:
+    """
+    Checks whether a title is written in English using langdetect.
+    Returns True for English titles, False otherwise.
+    Short titles (less than 3 chars) are rejected to avoid false positives.
+    """
+    if pd.isna(title) or not title or len(str(title).strip()) < 3:
+        return False
+    try:
+        detected = detect(str(title))
+        return detected == 'en'
+    except LangDetectException:
+        return False
 
 
 def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
@@ -75,6 +106,7 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     The 'soup' combines title, author, genre, and description with specific weights
     to guide the TF-IDF vectorizer towards more important features.
     Also generates a clean vocabulary JSON for frontend autocomplete.
+    Non-English titles in the English dataset are filtered out using langdetect.
     """
     console.print("[bold magenta]Starting Dataset Preprocessing...[/bold magenta]")
     dfs = []
@@ -84,6 +116,15 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     if RAW_DATA_PATH_EN.exists():
         df_en = pd.read_csv(RAW_DATA_PATH_EN, encoding='utf-8')
         df_en = df_en[['bookId', 'title', 'author', 'genres', 'description', 'rating', 'coverImg']]
+
+        console.print("[cyan]Filtering non-English titles with langdetect...[/cyan]")
+        initial_en_count = len(df_en)
+        df_en['is_english'] = df_en['title'].apply(is_english_title)
+        df_en = df_en[df_en['is_english']].drop(columns=['is_english'])
+        removed_en = initial_en_count - len(df_en)
+        if removed_en > 0:
+            console.print(f"[yellow]Removed {removed_en} non-English titles from English dataset.[/yellow]")
+
         df_en['language'] = 'en'
         df_en['bookId'] = "en_" + df_en['bookId'].astype(str)
         dfs.append(df_en)
@@ -127,10 +168,14 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
         task = progress.add_task("Processing books", total=len(df))
         for _, row in df.iterrows():
             lang = row['language']
-            c_title = cleaner.clean_persian_text(row['title']) if lang == 'fa' else cleaner.clean_english_text(
-                row['title'])
-            c_author = cleaner.clean_persian_text(row['author']) if lang == 'fa' else str(row['author']).replace(" ",
-                                                                                                                 "").lower()
+
+            if lang == 'fa':
+                c_title = cleaner.clean_persian_text_simple(row['title'])
+                c_author = cleaner.clean_persian_text_simple(row['author'])
+            else:
+                c_title = cleaner.clean_english_text(row['title'])
+                c_author = str(row['author']).strip().lower()
+
             c_genre = cleaner.clean_genres(row['genres'])
             c_desc = cleaner.clean_persian_text(row['description']) if lang == 'fa' else cleaner.clean_english_text(
                 row['description'])

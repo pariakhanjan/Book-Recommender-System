@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:text="Let's personalize your experience"
             android:textSize="14sp"
-            android:textColor="@color/gray_text"
+            android:textColor="@color/black"
             android:gravity="center"
             android:layout_marginBottom="24dp" />
 
@@ -153,7 +153,7 @@
             android:textSize="16sp"
             android:padding="14dp"
             android:backgroundTint="@color/primary_purple"
-            android:textColor="@color/gray_text" />
+            android:textColor="@color/black" />
 
         <ProgressBar
             android:id="@+id/progressBar"

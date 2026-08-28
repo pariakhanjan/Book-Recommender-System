@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bookrecommender.app.R;
 import com.bookrecommender.app.api.ApiInterface;
@@ -73,6 +74,15 @@ public class SetupActivity extends AppCompatActivity {
 
         btnSubmit = findViewById(R.id.btnSubmit);
         progressBar = findViewById(R.id.progressBar);
+
+        TextView tvCancelAndLogout = findViewById(R.id.tvCancelAndLogout);
+        tvCancelAndLogout.setOnClickListener(v -> {
+            userManager.clearUser();
+            Intent intent = new Intent(this, AuthActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     /** Validates UI inputs and triggers the preference update process. */

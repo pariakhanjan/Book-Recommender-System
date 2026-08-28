@@ -59,8 +59,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ArrayAdapter<CharSequence> adapterSpinner = ArrayAdapter.createFromResource(this,
-                R.array.top_n_options, android.R.layout.simple_spinner_item);
-        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                R.array.top_n_options, R.layout.spinner_item_purple);
+        adapterSpinner.setDropDownViewResource(R.layout.spinner_dropdown_item_purple);
         spinnerTopN.setAdapter(adapterSpinner);
         spinnerTopN.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
