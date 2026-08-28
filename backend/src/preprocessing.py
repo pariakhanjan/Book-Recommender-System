@@ -2,6 +2,7 @@ import pandas as pd
 import ast
 import re
 import string
+import json
 from pathlib import Path
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from src.config import RAW_DATA_PATH_EN, RAW_DATA_PATH_FA, PROCESSED_DATA_PATH
@@ -37,11 +38,13 @@ class TextCleaner:
             self.lemmatizer = Lemmatizer()
 
     def clean_english_text(self, text: str) -> str:
+        """Cleans and tokenizes English text by removing punctuation and stopwords."""
         if pd.isna(text) or not text: return ""
         text = str(text).lower().translate(str.maketrans('', '', string.punctuation))
         return " ".join([w for w in text.split() if w not in ENGLISH_STOPWORDS and len(w) > 2])
 
     def clean_persian_text(self, text: str) -> str:
+        """Cleans and tokenizes Persian text using Hazm or basic regex rules."""
         if pd.isna(text) or not text: return ""
         text = str(text)
         if HAZM_AVAILABLE:
@@ -55,6 +58,7 @@ class TextCleaner:
             return " ".join([w for w in text.split() if w not in PERSIAN_STOPWORDS and len(w) > 2])
 
     def clean_genres(self, genre_str: str) -> str:
+        """Parses and cleans genre strings, removing spaces for consistency."""
         if pd.isna(genre_str) or not genre_str: return ""
         try:
             genres = ast.literal_eval(genre_str)
@@ -70,6 +74,7 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     Loads raw datasets, cleans text, and engineers the 'soup' feature for TF-IDF.
     The 'soup' combines title, author, genre, and description with specific weights
     to guide the TF-IDF vectorizer towards more important features.
+    Also generates a clean vocabulary JSON for frontend autocomplete.
     """
     console.print("[bold magenta]Starting Dataset Preprocessing...[/bold magenta]")
     dfs = []
@@ -112,7 +117,10 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     if dropped_count > 0:
         console.print(f"[yellow]Dropped {dropped_count} invalid/duplicate rows.[/yellow]")
 
-    clean_titles, clean_authors, clean_genres_list, clean_descriptions, soups = [], [], [], [], []
+    valid_rows = []
+    unique_titles = set()
+    unique_authors = set()
+    unique_genres = set()
 
     with Progress(SpinnerColumn(), TextColumn("[bold blue]{task.description}[/bold blue]"), BarColumn(),
                   TaskProgressColumn(), console=console) as progress:
@@ -127,27 +135,60 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
             c_desc = cleaner.clean_persian_text(row['description']) if lang == 'fa' else cleaner.clean_english_text(
                 row['description'])
 
+            if not c_desc and not c_genre:
+                progress.update(task, advance=1)
+                continue
+
             WEIGHTS = {'title': 2, 'author': 2, 'genre': 4, 'description': 1}
             soup_text = f"{(c_title + ' ') * WEIGHTS['title']} {(c_author + ' ') * WEIGHTS['author']} {(c_genre + ' ') * WEIGHTS['genre']} {c_desc}"
 
-            clean_titles.append(c_title)
-            clean_authors.append(c_author)
-            clean_genres_list.append(c_genre)
-            clean_descriptions.append(c_desc)
-            soups.append(soup_text.strip())
+            if c_title: unique_titles.add(c_title)
+            if c_author: unique_authors.add(c_author)
+            if c_genre:
+                unique_genres.update(c_genre.split())
 
+            valid_rows.append({
+                'bookId': row['bookId'],
+                'title': row['title'],
+                'author': row['author'],
+                'genres': row['genres'],
+                'description': row['description'],
+                'rating': row['rating'],
+                'coverImg': row['coverImg'],
+                'language': lang,
+                'clean_title': c_title,
+                'clean_author': c_author,
+                'clean_genres': c_genre,
+                'clean_description': c_desc,
+                'soup': soup_text.strip()
+            })
             progress.update(task, advance=1)
 
-    df['clean_title'] = clean_titles
-    df['clean_author'] = clean_authors
-    df['clean_genres'] = clean_genres_list
-    df['clean_description'] = clean_descriptions
-    df['soup'] = soups
+    final_df = pd.DataFrame(valid_rows)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_path, index=False, encoding='utf-8')
-    console.print(f"[bold green]Preprocessing finished! Saved {len(df)} books to {output_path}[/bold green]")
-    return df
+    final_df.to_csv(output_path, index=False, encoding='utf-8')
+    console.print(f"[bold green]Preprocessing finished! Saved {len(final_df)} valid books to {output_path}[/bold green]")
+
+    vocab_path = output_path.parent / "clean_vocabulary.json"
+    vocabulary = {
+        "genres": sorted(list(unique_genres)),
+        "authors": sorted(list(unique_authors)),
+        "titles": sorted(list(unique_titles)),
+        "metadata": {
+            "total_genres": len(unique_genres),
+            "total_authors": len(unique_authors),
+            "total_titles": len(unique_titles),
+            "total_books": len(final_df)
+        }
+    }
+
+    with open(vocab_path, 'w', encoding='utf-8') as f:
+        json.dump(vocabulary, f, ensure_ascii=False, indent=2)
+
+    console.print(f"[bold green]Clean vocabulary saved to {vocab_path}[/bold green]")
+
+    return final_df
 
 
 if __name__ == "__main__":

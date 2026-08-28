@@ -101,7 +101,6 @@ class RecommenderEvaluator:
         Returns:
             Set of book IDs that should be recommended
         """
-        # Default parameters
         liked_genres = liked_genres or []
         liked_authors = liked_authors or []
         liked_books = liked_books or []
@@ -109,10 +108,8 @@ class RecommenderEvaluator:
         disliked_authors = disliked_authors or []
         disliked_books = disliked_books or []
 
-        # Start with language filter
         base_mask = self.df['language'] == lang
 
-        # Check for Cold Start (no preferences)
         is_cold_start = (
                 not liked_books and
                 not liked_genres and
@@ -120,40 +117,30 @@ class RecommenderEvaluator:
         )
 
         if is_cold_start:
-            # Cold Start: Ground truth = all books in language
-            # (system should recommend popular books)
             gt_ids = set(self.df[base_mask]['bookId'].astype(str).tolist())
             logger.debug(f"Cold Start: Ground truth size = {len(gt_ids)}")
             return gt_ids
 
-        # Initialize positive matching (OR logic - at least one preference must match)
         positive_mask = pd.Series(False, index=self.df.index)
 
-        # 1. Book-based ground truth (most important)
         if liked_books:
             liked_books_str = [str(b) for b in liked_books]
             liked_indices = self.df[self.df['bookId'].astype(str).isin(liked_books_str)].index
 
             if len(liked_indices) > 0:
-                # Find books SIMILAR to liked books
-                # (not the liked books themselves, as they're excluded from recommendations)
                 avg_vector = np.asarray(self.tfidf_matrix[liked_indices].mean(axis=0)).flatten().reshape(1, -1)
                 similarities = cosine_similarity(avg_vector, self.tfidf_matrix).flatten()
 
-                # Get top 500 most similar books (increase pool for better recall)
                 similar_indices = np.argsort(similarities)[::-1][:500]
                 similar_book_ids = set(self.df.iloc[similar_indices]['bookId'].astype(str).tolist())
 
-                # Remove the liked books themselves (they won't be recommended)
                 similar_book_ids -= set(liked_books_str)
 
                 positive_mask = positive_mask | self.df['bookId'].astype(str).isin(similar_book_ids)
                 logger.debug(f"Similar to liked books: {len(similar_book_ids)}")
 
-        # 2. Genre-based ground truth
         if liked_genres:
             for genre in liked_genres:
-                # Use clean_genres for better matching
                 genre_mask = self.df['clean_genres'].str.contains(
                     genre.lower(),
                     case=False,
@@ -163,7 +150,6 @@ class RecommenderEvaluator:
                 positive_mask = positive_mask | genre_mask
             logger.debug(f"Matching genres: {len(self.df[positive_mask])}")
 
-        # 3. Author-based ground truth
         if liked_authors:
             for author in liked_authors:
                 author_clean = author.lower().replace(" ", "")
@@ -176,7 +162,6 @@ class RecommenderEvaluator:
                 positive_mask = positive_mask | author_mask
             logger.debug(f"Matching authors: {len(self.df[positive_mask])}")
 
-        # Build negative mask (exclude disliked items)
         negative_mask = pd.Series(True, index=self.df.index)
 
         if disliked_books:
@@ -204,7 +189,6 @@ class RecommenderEvaluator:
                 )
                 negative_mask = negative_mask & ~author_mask
 
-        # Combine: must be positive AND not negative AND in language
         final_mask = base_mask & positive_mask & negative_mask
         ground_truth_ids = set(self.df[final_mask]['bookId'].astype(str).tolist())
 
@@ -307,7 +291,6 @@ class RecommenderEvaluator:
         """
         logger.info(f"Evaluating scenario: {scenario_name}")
 
-        # Get recommendations from model
         recommendations = self.recommender.recommend_user_profile(
             favorite_genres=user_profile.get('favorite_genres', []),
             favorite_authors=user_profile.get('favorite_authors', []),
@@ -321,7 +304,6 @@ class RecommenderEvaluator:
 
         rec_ids = [str(r['bookId']) for r in recommendations]
 
-        # Get ground truth
         ground_truth_ids = self._get_ground_truth_ids(
             liked_genres=user_profile.get('favorite_genres', []),
             liked_authors=user_profile.get('favorite_authors', []),
@@ -332,7 +314,6 @@ class RecommenderEvaluator:
             lang=user_profile.get('language', 'en')
         )
 
-        # Calculate metrics at different cutoffs
         precision_at_10 = self.calculate_precision_at_k(rec_ids, ground_truth_ids, k=10)
         precision_at_50 = self.calculate_precision_at_k(rec_ids, ground_truth_ids, k=50)
 

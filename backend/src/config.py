@@ -1,5 +1,8 @@
+"""
+Application configuration and environment variable management.
+"""
 from pathlib import Path
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,9 +17,11 @@ PROCESSED_DATA_PATH = PROCESSED_DATA_DIR / "books_clean.csv"
 TFIDF_MATRIX_PATH = PROCESSED_DATA_DIR / "tfidf_matrix.pkl"
 SIMILARITY_MATRIX_PATH = PROCESSED_DATA_DIR / "similarity_matrix.pkl"
 VECTORIZER_PATH = PROCESSED_DATA_DIR / "tfidf_vectorizer.pkl"
+CLEAN_VOCABULARY_PATH = PROCESSED_DATA_DIR / "clean_vocabulary.json"
 
 
 class Settings(BaseSettings):
+    """Application settings loaded from environment variables or .env file."""
     DB_USER: str = "postgres"
     DB_PASSWORD: str = "postgres"
     DB_HOST: str = "localhost"
@@ -25,11 +30,10 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
+        """Constructs the SQLAlchemy database connection string."""
         return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    class Config:
-        env_file = BASE_DIR / ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", env_file_encoding="utf-8")
 
 
 settings = Settings()

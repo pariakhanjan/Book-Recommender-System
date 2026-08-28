@@ -1,4 +1,7 @@
-from datetime import datetime
+"""
+SQLAlchemy database models and session management.
+"""
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, JSON, Index
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import logging
@@ -21,11 +24,12 @@ Base = declarative_base()
 
 
 class UserModel(Base):
+    """Represents a registered user in the system."""
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     preference = relationship("UserPreferenceModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
     feedbacks = relationship("UserFeedbackModel", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
@@ -33,6 +37,7 @@ class UserModel(Base):
 
 
 class UserPreferenceModel(Base):
+    """Represents a user's reading preferences and feedback history."""
     __tablename__ = "user_preferences"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
@@ -45,12 +50,13 @@ class UserPreferenceModel(Base):
     disliked_authors = Column(JSON, default=list, nullable=False)
     disliked_book_ids = Column(JSON, default=list, nullable=False)
 
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     user = relationship("UserModel", back_populates="preference")
     __table_args__ = (Index('ix_user_preferences_user_id', 'user_id'),)
 
 
 class UserFeedbackModel(Base):
+    """Represents explicit feedback provided by a user for a specific book."""
     __tablename__ = "user_feedbacks"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -58,7 +64,7 @@ class UserFeedbackModel(Base):
     feedback_type = Column(String(20), nullable=False)
     rating = Column(Float, nullable=True)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
     user = relationship("UserModel", back_populates="feedbacks")
     __table_args__ = (
@@ -66,6 +72,10 @@ class UserFeedbackModel(Base):
 
 
 def get_db():
+    """
+    Dependency that provides a database session.
+    Ensures the session is properly closed after the request.
+    """
     db = SessionLocal()
     try:
         yield db
@@ -74,6 +84,7 @@ def get_db():
 
 
 def init_db():
+    """Initializes the database by creating all defined tables."""
     logger.info("Checking database tables...")
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables are ready.")

@@ -21,11 +21,9 @@ import numpy as np
 from unittest.mock import Mock
 import sys
 from pathlib import Path
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from src.evaluation import RecommenderEvaluator
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 class TestPrecisionRecallCalculation(unittest.TestCase):

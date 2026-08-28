@@ -1,5 +1,12 @@
+"""
+Main entry point for the Book Recommender System FastAPI application.
+
+This module initializes the FastAPI app, configures middleware,
+and sets up the lifespan context manager for startup and shutdown events.
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 from contextlib import asynccontextmanager
 from rich.console import Console
 from rich.panel import Panel
@@ -13,6 +20,15 @@ console = Console()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Manages the startup and shutdown events of the FastAPI application.
+
+    Displays startup information, initializes the database, and logs
+    available API documentation endpoints.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+    """
     console.print("\n[bold magenta]" + "=" * 60 + "[/bold magenta]")
     console.print("[bold magenta]📚 Book Recommender System API[/bold magenta]".center(60))
     console.print("[bold magenta]" + "=" * 60 + "[/bold magenta]\n")
@@ -71,6 +87,5 @@ app.add_middleware(
 app.include_router(router)
 
 if __name__ == "__main__":
-    import uvicorn
     console.print("[bold cyan]Initializing server...[/bold cyan]\n")
     uvicorn.run(app, host="0.0.0.0", port=8000)

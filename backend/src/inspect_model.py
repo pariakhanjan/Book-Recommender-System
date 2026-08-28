@@ -1,8 +1,22 @@
+"""
+Inspection utility for saved TF-IDF artifacts.
+
+This script loads the pre-computed TF-IDF vectorizer and matrix
+to verify their integrity and display key statistics about the
+feature space.
+"""
 import joblib
 from src.config import TFIDF_MATRIX_PATH, VECTORIZER_PATH
 
 
-def inspect_saved_files():
+def inspect_saved_files() -> None:
+    """
+    Loads and inspects the saved TF-IDF vectorizer and matrix.
+
+    Prints the total vocabulary size, a sample of feature names,
+    the shape of the TF-IDF matrix, the number of non-zero elements,
+    and a sample of the first book's sparse vector representation.
+    """
     print("--- Loading Saved Files ---")
     tfidf = joblib.load(VECTORIZER_PATH)
     tfidf_matrix = joblib.load(TFIDF_MATRIX_PATH)

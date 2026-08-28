@@ -1,3 +1,9 @@
+"""
+Feature extraction module for the Book Recommender System.
+
+This module handles the generation of TF-IDF vectors from the
+preprocessed book dataset and saves them for use by the recommender engine.
+"""
 import pandas as pd
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -5,7 +11,14 @@ from src.config import PROCESSED_DATA_PATH, TFIDF_MATRIX_PATH, VECTORIZER_PATH
 from utils.logger import console
 
 
-def build_features():
+def build_features() -> None:
+    """
+    Loads the processed dataset, extracts TF-IDF features, and saves the artifacts.
+
+    Reads the 'soup' column from the processed CSV, applies a TF-IDF vectorizer
+    with sublinear TF scaling and a maximum of 20,000 features, and persists
+    both the vectorizer and the resulting sparse matrix to disk using joblib.
+    """
     console.print("[bold cyan]Loading processed dataset...[/bold cyan]")
     df = pd.read_csv(PROCESSED_DATA_PATH)
     df['soup'] = df['soup'].fillna('')

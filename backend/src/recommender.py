@@ -6,6 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from src.config import PROCESSED_DATA_PATH, TFIDF_MATRIX_PATH, VECTORIZER_PATH
 from utils.logger import logger
 
+
 class BookRecommender:
     """
     Core Recommendation Engine using Content-Based Filtering.
@@ -18,6 +19,7 @@ class BookRecommender:
         self.load_resources()
 
     def load_resources(self):
+        """Loads the processed dataset and pre-computed TF-IDF matrix into memory."""
         logger.info("Loading recommender engine resources...")
         self.df = pd.read_csv(PROCESSED_DATA_PATH)
         self.df['bookId'] = self.df['bookId'].astype(str)
@@ -26,6 +28,9 @@ class BookRecommender:
         logger.info("Resources loaded successfully.")
 
     def recommend_by_book_id(self, book_id: str, top_n: int = 5, lang: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Finds books similar to a specific book ID.
+        """
         book_id = str(book_id)
         if book_id not in self.df['bookId'].values:
             return []
@@ -113,7 +118,7 @@ class BookRecommender:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
                 weights.append(-0.15)
 
-        if not profile_vectors or sum(weights) == 0:
+        if not profile_vectors:
             logger.info("COLD START TRIGGERED: User profile empty. Falling back to popular books.")
             return self.get_popular_books(n=top_n, languages=preferred_languages)
 
