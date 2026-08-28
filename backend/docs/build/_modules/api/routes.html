@@ -1,0 +1,534 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>api.routes &mdash; Book Recommender System Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Book Recommender System
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Book Recommender System</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">api.routes</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for api.routes</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">API Routes for the Book Recommender System.</span>
+
+<span class="sd">Defines all endpoints for user management, authentication,</span>
+<span class="sd">preferences, feedback, and book recommendations.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">Query</span><span class="p">,</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">status</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bcrypt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">CLEAN_VOCABULARY_PATH</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UserCreate</span><span class="p">,</span> <span class="n">UserResponse</span><span class="p">,</span> <span class="n">PreferenceCreate</span><span class="p">,</span> <span class="n">PreferenceResponse</span><span class="p">,</span>
+    <span class="n">FeedbackCreate</span><span class="p">,</span> <span class="n">FeedbackResponse</span><span class="p">,</span> <span class="n">BookResponse</span><span class="p">,</span> <span class="n">UserLogin</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span><span class="p">,</span> <span class="n">UserModel</span><span class="p">,</span> <span class="n">UserPreferenceModel</span><span class="p">,</span> <span class="n">UserFeedbackModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.recommender</span><span class="w"> </span><span class="kn">import</span> <span class="n">BookRecommender</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"/api"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"API"</span><span class="p">])</span>
+<span class="n">recommender</span> <span class="o">=</span> <span class="n">BookRecommender</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="get_password_hash">
+<a class="viewcode-back" href="../../index.html#api.routes.get_password_hash">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_password_hash</span><span class="p">(</span><span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Hashes a plain text password using bcrypt.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        password (str): The plain text password.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: The hashed password.</span>
+<span class="sd">    """</span>
+    <span class="n">salt</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">gensalt</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">),</span> <span class="n">salt</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="verify_password">
+<a class="viewcode-back" href="../../index.html#api.routes.verify_password">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_password</span><span class="p">(</span><span class="n">plain_password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hashed_password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Verifies a plain text password against a hashed password.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        plain_password (str): The plain text password to check.</span>
+<span class="sd">        hashed_password (str): The stored hashed password.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if the password matches, False otherwise.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">checkpw</span><span class="p">(</span><span class="n">plain_password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">),</span> <span class="n">hashed_password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="health_check">
+<a class="viewcode-back" href="../../index.html#api.routes.health_check">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"System"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Simple health check endpoint to verify API is running."""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"online"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">:</span> <span class="s2">"Book Recommender API is running"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"2.0.0"</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="login_user">
+<a class="viewcode-back" href="../../index.html#api.routes.login_user">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/auth/login"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Authentication"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">login_user</span><span class="p">(</span><span class="n">login_data</span><span class="p">:</span> <span class="n">UserLogin</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Authenticates a user and returns their ID and username.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        login_data (UserLogin): The user's login credentials.</span>
+<span class="sd">        db (Session): The database session.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A dictionary containing the user_id, username, and success message.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 401 Unauthorized if credentials are invalid.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">username</span> <span class="o">==</span> <span class="n">login_data</span><span class="o">.</span><span class="n">username</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">verify_password</span><span class="p">(</span><span class="n">login_data</span><span class="o">.</span><span class="n">password</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">hashed_password</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_401_UNAUTHORIZED</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Invalid username or password"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"user_id"</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"username"</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">:</span> <span class="s2">"Login successful"</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="create_user">
+<a class="viewcode-back" href="../../index.html#api.routes.create_user">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/users"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">UserResponse</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_201_CREATED</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Users"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="n">user_in</span><span class="p">:</span> <span class="n">UserCreate</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">UserModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Registers a new user, hashes their password, and initializes an empty preference profile.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_in (UserCreate): The new user's registration data.</span>
+<span class="sd">        db (Session): The database session.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        UserModel: The created user object.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 400 Bad Request if the username is already registered.</span>
+<span class="sd">    """</span>
+    <span class="n">db_user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">username</span> <span class="o">==</span> <span class="n">user_in</span><span class="o">.</span><span class="n">username</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">db_user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Username already registered"</span><span class="p">)</span>
+
+    <span class="n">hashed_pw</span> <span class="o">=</span> <span class="n">get_password_hash</span><span class="p">(</span><span class="n">user_in</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+    <span class="n">new_user</span> <span class="o">=</span> <span class="n">UserModel</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">user_in</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">hashed_password</span><span class="o">=</span><span class="n">hashed_pw</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_user</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">new_user</span><span class="p">)</span>
+
+    <span class="n">pref</span> <span class="o">=</span> <span class="n">UserPreferenceModel</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">new_user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">preferred_languages</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pref</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">new_user</span></div>
+
+
+
+<div class="viewcode-block" id="get_user">
+<a class="viewcode-back" href="../../index.html#api.routes.get_user">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/users/</span><span class="si">{user_id}</span><span class="s2">"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">UserResponse</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Users"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">UserModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Retrieves a user by their ID.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (int): The ID of the user.</span>
+<span class="sd">        db (Session): The database session.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        UserModel: The user object.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 404 Not Found if the user does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"User not found"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">user</span></div>
+
+
+
+<div class="viewcode-block" id="get_user_preferences">
+<a class="viewcode-back" href="../../index.html#api.routes.get_user_preferences">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/users/</span><span class="si">{user_id}</span><span class="s2">/preferences"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PreferenceResponse</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Users"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_user_preferences</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">UserPreferenceModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Retrieves or initializes a user's preference profile.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (int): The ID of the user.</span>
+<span class="sd">        db (Session): The database session.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        UserPreferenceModel: The user's preference object.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 404 Not Found if the user does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"User not found"</span><span class="p">)</span>
+    <span class="n">pref</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pref</span><span class="p">:</span>
+        <span class="n">pref</span> <span class="o">=</span> <span class="n">UserPreferenceModel</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span> <span class="n">preferred_languages</span><span class="o">=</span><span class="p">[])</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pref</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">pref</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pref</span></div>
+
+
+
+<div class="viewcode-block" id="update_user_preferences">
+<a class="viewcode-back" href="../../index.html#api.routes.update_user_preferences">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">"/users/</span><span class="si">{user_id}</span><span class="s2">/preferences"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PreferenceResponse</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Users"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_user_preferences</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pref_in</span><span class="p">:</span> <span class="n">PreferenceCreate</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">UserPreferenceModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Updates the user's liked/disliked genres, authors, and books.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id (int): The ID of the user.</span>
+<span class="sd">        pref_in (PreferenceCreate): The updated preference data.</span>
+<span class="sd">        db (Session): The database session.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        UserPreferenceModel: The updated preference object.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 404 Not Found if the user does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"User not found"</span><span class="p">)</span>
+    <span class="n">pref</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pref</span><span class="p">:</span>
+        <span class="n">pref</span> <span class="o">=</span> <span class="n">UserPreferenceModel</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pref</span><span class="p">)</span>
+
+    <span class="n">pref</span><span class="o">.</span><span class="n">preferred_languages</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">preferred_languages</span>
+    <span class="n">pref</span><span class="o">.</span><span class="n">liked_genres</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">liked_genres</span>
+    <span class="n">pref</span><span class="o">.</span><span class="n">liked_authors</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">liked_authors</span>
+    <span class="n">pref</span><span class="o">.</span><span class="n">liked_book_ids</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">liked_book_ids</span>
+    <span class="n">pref</span><span class="o">.</span><span class="n">disliked_genres</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">disliked_genres</span>
+    <span class="n">pref</span><span class="o">.</span><span class="n">disliked_authors</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">disliked_authors</span>
+    <span class="n">pref</span><span class="o">.</span><span class="n">disliked_book_ids</span> <span class="o">=</span> <span class="n">pref_in</span><span class="o">.</span><span class="n">disliked_book_ids</span>
+
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">pref</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pref</span></div>
+
+
+
+<div class="viewcode-block" id="submit_feedback">
+<a class="viewcode-back" href="../../index.html#api.routes.submit_feedback">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/feedback"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">FeedbackResponse</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Feedback"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">submit_feedback</span><span class="p">(</span><span class="n">feedback_in</span><span class="p">:</span> <span class="n">FeedbackCreate</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">UserFeedbackModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Records user feedback and dynamically updates their preference profile.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        feedback_in (FeedbackCreate): The feedback data.</span>
+<span class="sd">        db (Session): The database session.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        UserFeedbackModel: The created feedback object.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 404 Not Found if the user does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">feedback_in</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"User not found"</span><span class="p">)</span>
+
+    <span class="n">new_feedback</span> <span class="o">=</span> <span class="n">UserFeedbackModel</span><span class="p">(</span><span class="o">**</span><span class="n">feedback_in</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_feedback</span><span class="p">)</span>
+
+    <span class="n">pref</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">feedback_in</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pref</span><span class="p">:</span>
+        <span class="n">current_liked</span> <span class="o">=</span> <span class="n">pref</span><span class="o">.</span><span class="n">liked_book_ids</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">current_disliked</span> <span class="o">=</span> <span class="n">pref</span><span class="o">.</span><span class="n">disliked_book_ids</span> <span class="ow">or</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">feedback_in</span><span class="o">.</span><span class="n">feedback_type</span> <span class="o">==</span> <span class="s2">"liked"</span> <span class="ow">and</span> <span class="n">feedback_in</span><span class="o">.</span><span class="n">book_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_liked</span><span class="p">:</span>
+            <span class="n">pref</span><span class="o">.</span><span class="n">liked_book_ids</span> <span class="o">=</span> <span class="n">current_liked</span> <span class="o">+</span> <span class="p">[</span><span class="n">feedback_in</span><span class="o">.</span><span class="n">book_id</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">feedback_in</span><span class="o">.</span><span class="n">feedback_type</span> <span class="o">==</span> <span class="s2">"disliked"</span> <span class="ow">and</span> <span class="n">feedback_in</span><span class="o">.</span><span class="n">book_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_disliked</span><span class="p">:</span>
+            <span class="n">pref</span><span class="o">.</span><span class="n">disliked_book_ids</span> <span class="o">=</span> <span class="n">current_disliked</span> <span class="o">+</span> <span class="p">[</span><span class="n">feedback_in</span><span class="o">.</span><span class="n">book_id</span><span class="p">]</span>
+
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">new_feedback</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_feedback</span></div>
+
+
+
+<div class="viewcode-block" id="get_personalized_recommendations">
+<a class="viewcode-back" href="../../index.html#api.routes.get_personalized_recommendations">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="s2">"/users/</span><span class="si">{user_id}</span><span class="s2">/recommendations"</span><span class="p">,</span>
+    <span class="n">response_model</span><span class="o">=</span><span class="n">List</span><span class="p">[</span><span class="n">BookResponse</span><span class="p">],</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Recommendations"</span><span class="p">],</span>
+    <span class="n">summary</span><span class="o">=</span><span class="s2">"Get Personalized Recommendations"</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">"Retrieves top N book recommendations based on the user's profile. "</span>
+                <span class="s2">"Applies research-backed weights to liked/disliked items. "</span>
+                <span class="s2">"Triggers Cold Start fallback to popular books if the profile is empty."</span><span class="p">,</span>
+    <span class="n">responses</span><span class="o">=</span><span class="p">{</span>
+        <span class="mi">200</span><span class="p">:</span> <span class="p">{</span><span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Successfully retrieved recommendations"</span><span class="p">},</span>
+        <span class="mi">400</span><span class="p">:</span> <span class="p">{</span><span class="s2">"description"</span><span class="p">:</span> <span class="s2">"User has not selected preferred languages yet"</span><span class="p">},</span>
+        <span class="mi">404</span><span class="p">:</span> <span class="p">{</span><span class="s2">"description"</span><span class="p">:</span> <span class="s2">"User not found"</span><span class="p">},</span>
+        <span class="mi">500</span><span class="p">:</span> <span class="p">{</span><span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Internal recommendation engine error"</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_personalized_recommendations</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">top_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span> <span class="n">db</span><span class="p">:</span> <span class="n">Session</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generates personalized book recommendations for a specific user.</span>
+<span class="sd">    """</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserModel</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"User </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> not found"</span><span class="p">)</span>
+
+    <span class="n">pref</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">UserPreferenceModel</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pref</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">pref</span><span class="o">.</span><span class="n">preferred_languages</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"COLD START BLOCKED: User </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> has not selected preferred languages."</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Preferred languages must be set to get recommendations"</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">recommender</span><span class="o">.</span><span class="n">recommend_user_profile</span><span class="p">(</span>
+            <span class="n">preferred_languages</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">preferred_languages</span><span class="p">,</span>
+            <span class="n">favorite_genres</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">liked_genres</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">favorite_authors</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">liked_authors</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">liked_book_ids</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">liked_book_ids</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">disliked_genres</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">disliked_genres</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">disliked_authors</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">disliked_authors</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">disliked_book_ids</span><span class="o">=</span><span class="n">pref</span><span class="o">.</span><span class="n">disliked_book_ids</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Recommendation error for User </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Recommendation error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_popular_books">
+<a class="viewcode-back" href="../../index.html#api.routes.get_popular_books">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/books/popular"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">List</span><span class="p">[</span><span class="n">BookResponse</span><span class="p">],</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Books"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_popular_books</span><span class="p">(</span><span class="n">top_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span> <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Retrieves popular books, optionally filtered by language."""</span>
+    <span class="n">languages</span> <span class="o">=</span> <span class="p">[</span><span class="n">lang</span><span class="p">]</span> <span class="k">if</span> <span class="n">lang</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">recommender</span><span class="o">.</span><span class="n">get_popular_books</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">top_n</span><span class="p">,</span> <span class="n">languages</span><span class="o">=</span><span class="n">languages</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_unique_genres">
+<a class="viewcode-back" href="../../index.html#api.routes.get_unique_genres">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search/unique-genres"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Search"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_unique_genres</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Returns a sorted list of all unique genres from the dataset."""</span>
+    <span class="n">genres</span> <span class="o">=</span> <span class="n">recommender</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">'clean_genres'</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">all_genres</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">genre_str</span> <span class="ow">in</span> <span class="n">genres</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">genre_str</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">genre_str</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">all_genres</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">all_genres</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="get_unique_authors">
+<a class="viewcode-back" href="../../index.html#api.routes.get_unique_authors">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search/unique-authors"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Search"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_unique_authors</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Returns a sorted list of all unique authors from the dataset."""</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="n">recommender</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">'clean_author'</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">authors</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()])</span></div>
+
+
+
+<div class="viewcode-block" id="get_unique_books">
+<a class="viewcode-back" href="../../index.html#api.routes.get_unique_books">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search/unique-books"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Search"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_unique_books</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Returns a sorted list of all unique book titles from the dataset."""</span>
+    <span class="n">books</span> <span class="o">=</span> <span class="n">recommender</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">books</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">b</span><span class="o">.</span><span class="n">strip</span><span class="p">()])</span></div>
+
+
+
+<div class="viewcode-block" id="search_genres">
+<a class="viewcode-back" href="../../index.html#api.routes.search_genres">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search/genres"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Search"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">search_genres</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Search query for genres"</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Searches for genres from the clean vocabulary JSON file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        q (str): The search query string.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: A list of matching genres (max 20).</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">vocab_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">CLEAN_VOCABULARY_PATH</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vocab_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Vocabulary file not found: </span><span class="si">{</span><span class="n">vocab_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">vocab_file</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">vocabulary</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">genres</span> <span class="o">=</span> <span class="n">vocabulary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'genres'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">matched</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">genres</span> <span class="k">if</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matched</span><span class="p">)[:</span><span class="mi">20</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error searching genres: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="search_authors">
+<a class="viewcode-back" href="../../index.html#api.routes.search_authors">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search/authors"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Search"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">search_authors</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Search query for authors"</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Searches for authors from the clean vocabulary JSON file.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">vocab_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">CLEAN_VOCABULARY_PATH</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vocab_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Vocabulary file not found: </span><span class="si">{</span><span class="n">vocab_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">vocab_file</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">vocabulary</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">authors</span> <span class="o">=</span> <span class="n">vocabulary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'authors'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">matched</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">authors</span> <span class="k">if</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">a</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matched</span><span class="p">)[:</span><span class="mi">20</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error searching authors: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="search_books">
+<a class="viewcode-back" href="../../index.html#api.routes.search_books">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/search/books"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"Search"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">search_books</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Search query for books"</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Searches for book titles from the clean vocabulary JSON file.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">vocab_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">CLEAN_VOCABULARY_PATH</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vocab_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Vocabulary file not found: </span><span class="si">{</span><span class="n">vocab_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">vocab_file</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">vocabulary</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">titles</span> <span class="o">=</span> <span class="n">vocabulary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'titles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">matched</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">titles</span> <span class="k">if</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">t</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matched</span><span class="p">)[:</span><span class="mi">20</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error searching books: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paria Khanjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
