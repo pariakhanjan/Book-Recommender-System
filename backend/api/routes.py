@@ -310,10 +310,11 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
     pref = db.query(UserPreferenceModel).filter(UserPreferenceModel.user_id == user_id).first()
-    if not pref or not pref.preferred_languages:
+
+    if not pref or (
+            not pref.preferred_languages and not pref.liked_genres and not pref.liked_authors and not pref.liked_book_ids):
         logger.info(f"COLD START TRIGGERED for User {user_id}. Falling back to popular books.")
         return get_popular_books(top_n=top_n, lang=None)
-
     try:
         recommendations = recommender.recommend_user_profile(
             preferred_languages=pref.preferred_languages,

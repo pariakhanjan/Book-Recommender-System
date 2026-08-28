@@ -60,78 +60,65 @@ class BookRecommender:
 
         liked_book_ids = [str(b) for b in (liked_book_ids or [])]
         disliked_book_ids = [str(b) for b in (disliked_book_ids or [])]
-        favorite_authors, favorite_genres = favorite_authors or [], favorite_genres or []
-        disliked_authors, disliked_genres = disliked_authors or [], disliked_genres or []
+        favorite_authors = favorite_authors or []
+        favorite_genres = favorite_genres or []
+        disliked_authors = disliked_authors or []
+        disliked_genres = disliked_genres or []
+
+        logger.info(f"DEBUG: Processing preferences -> Genres: {favorite_genres}, Authors: {favorite_authors}, Liked Books: {len(liked_book_ids)}")
 
         profile_vectors, weights = [], []
 
         if liked_book_ids:
             idx = self.df[self.df['bookId'].isin(liked_book_ids)].index
+            logger.info(f"DEBUG: Matched {len(idx)} books for liked_book_ids")
             if len(idx) > 0:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(0.50)
+                weights.append(0.60) # وزن بالا برای کتاب‌های مشخص
 
         if favorite_genres:
             mask = self.df['clean_genres'].apply(lambda g: any(fg.lower() in str(g).lower() for fg in favorite_genres))
             idx = self.df[mask].index
+            logger.info(f"DEBUG: Matched {len(idx)} books for liked_genres")
             if len(idx) > 0:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(0.25)
+                weights.append(0.30)
 
         if favorite_authors:
-            clean_fav = [a.replace(" ", "").lower() for a in favorite_authors]
-            mask = self.df['clean_author'].apply(lambda a: any(ca in str(a) for ca in clean_fav))
+            mask = self.df['clean_author'].apply(lambda a: any(fav_auth.lower() in str(a).lower() for fav_auth in favorite_authors))
             idx = self.df[mask].index
             if len(idx) > 0:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(0.15)
-
-        if disliked_book_ids:
-            idx = self.df[self.df['bookId'].isin(disliked_book_ids)].index
-            if len(idx) > 0:
-                profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(-0.50)
-
-        if disliked_genres:
-            mask = self.df['clean_genres'].apply(lambda g: any(fg.lower() in str(g).lower() for fg in disliked_genres))
-            idx = self.df[mask].index
-            if len(idx) > 0:
-                profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(-0.25)
-
-        if disliked_authors:
-            clean_dis = [a.replace(" ", "").lower() for a in disliked_authors]
-            mask = self.df['clean_author'].apply(lambda a: any(ca in str(a) for ca in clean_dis))
-            idx = self.df[mask].index
-            if len(idx) > 0:
-                profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(-0.15)
+                weights.append(0.10)
 
         if not profile_vectors:
             logger.info("COLD START TRIGGERED: User profile empty. Falling back to popular books.")
             return self.get_popular_books(n=top_n, languages=preferred_languages)
 
         weights_arr = np.array(weights)
-        total_weight_sum = np.sum(weights_arr)
-
-        if abs(total_weight_sum) < 1e-6:
-            logger.info("Weights sum to zero (neutral profile). Falling back to popular books.")
-            return self.get_popular_books(n=top_n, languages=preferred_languages)
-
-        weights_arr = weights_arr / total_weight_sum
-
         user_vector = np.average(profile_vectors, axis=0, weights=weights_arr).reshape(1, -1)
         sim_scores = cosine_similarity(user_vector, self.tfidf_matrix).flatten()
 
         rec_df = self.df.copy()
         rec_df['similarity_score'] = sim_scores
 
-        rec_df = rec_df[~rec_df['bookId'].isin(liked_book_ids + disliked_book_ids)]
+        if disliked_book_ids:
+            rec_df = rec_df[~rec_df['bookId'].isin(disliked_book_ids)]
+
+        penalty_mask = pd.Series(False, index=rec_df.index)
+
+        if disliked_genres:
+            penalty_mask |= rec_df['clean_genres'].apply(lambda g: any(fg.lower() in str(g).lower() for fg in disliked_genres))
+
+        if disliked_authors:
+            penalty_mask |= rec_df['clean_author'].apply(lambda a: any(dis_auth.lower() in str(a).lower() for dis_auth in disliked_authors))
+
+        rec_df.loc[penalty_mask, 'similarity_score'] -= 0.5
 
         if preferred_languages:
             rec_df = rec_df[rec_df['language'].isin(preferred_languages)]
 
-        rec_df['final_score'] = rec_df['similarity_score'] + (rec_df['rating'].fillna(0) * 0.10)
+        rec_df['final_score'] = rec_df['similarity_score'] + (rec_df['rating'].fillna(0) * 0.05)
 
         results = rec_df.sort_values(by='final_score', ascending=False).head(top_n)
         return (results[['bookId', 'title', 'author', 'genres', 'rating', 'coverImg', 'language', 'similarity_score']]
