@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Book Recommender</string>
+    <string name="app_name">Book Rec</string>
     <string-array name="top_n_options">
         <item>5</item>
         <item>10</item>

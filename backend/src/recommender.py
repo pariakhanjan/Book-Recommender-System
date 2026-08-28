@@ -74,7 +74,7 @@ class BookRecommender:
             logger.info(f"DEBUG: Matched {len(idx)} books for liked_book_ids")
             if len(idx) > 0:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(0.60) # وزن بالا برای کتاب‌های مشخص
+                weights.append(0.50)
 
         if favorite_genres:
             mask = self.df['clean_genres'].apply(lambda g: any(fg.lower() in str(g).lower() for fg in favorite_genres))
@@ -82,14 +82,15 @@ class BookRecommender:
             logger.info(f"DEBUG: Matched {len(idx)} books for liked_genres")
             if len(idx) > 0:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(0.30)
+                weights.append(0.45)
 
         if favorite_authors:
             mask = self.df['clean_author'].apply(lambda a: any(fav_auth.lower() in str(a).lower() for fav_auth in favorite_authors))
             idx = self.df[mask].index
+            logger.info(f"DEBUG: Matched {len(idx)} books for liked_authors")
             if len(idx) > 0:
                 profile_vectors.append(np.asarray(self.tfidf_matrix[idx].mean(axis=0)).flatten())
-                weights.append(0.10)
+                weights.append(0.05)
 
         if not profile_vectors:
             logger.info("COLD START TRIGGERED: User profile empty. Falling back to popular books.")
