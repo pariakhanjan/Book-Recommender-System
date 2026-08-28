@@ -12,6 +12,7 @@ class BookRecommender:
     Core Recommendation Engine using Content-Based Filtering.
     Utilizes TF-IDF vectors and Cosine Similarity to match user profiles with books.
     """
+
     def __init__(self):
         self.df = None
         self.tfidf = None
@@ -28,9 +29,6 @@ class BookRecommender:
         logger.info("Resources loaded successfully.")
 
     def recommend_by_book_id(self, book_id: str, top_n: int = 5, lang: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        Finds books similar to a specific book ID.
-        """
         book_id = str(book_id)
         if book_id not in self.df['bookId'].values:
             return []
@@ -59,16 +57,7 @@ class BookRecommender:
                                disliked_authors: List[str] = None,
                                disliked_book_ids: List[str] = None,
                                top_n: int = 5) -> List[Dict[str, Any]]:
-        """
-        Generates personalized recommendations based on weighted user preferences.
 
-        Weighting Strategy (Research-Backed):
-        - Liked Books: 0.50 (Strongest signal of exact taste)
-        - Liked Genres: 0.25 (Moderate signal of thematic preference)
-        - Liked Authors: 0.15 (Weaker signal to prevent author overfitting)
-        - Disliked items receive symmetrical negative weights to actively filter them out.
-        - Book Rating adds a minor 0.10 boost to the final similarity score.
-        """
         liked_book_ids = [str(b) for b in (liked_book_ids or [])]
         disliked_book_ids = [str(b) for b in (disliked_book_ids or [])]
         favorite_authors, favorite_genres = favorite_authors or [], favorite_genres or []
@@ -122,10 +111,16 @@ class BookRecommender:
             logger.info("COLD START TRIGGERED: User profile empty. Falling back to popular books.")
             return self.get_popular_books(n=top_n, languages=preferred_languages)
 
-        weights = np.array(weights)
-        weights = weights / np.sum(np.abs(weights))
-        user_vector = np.average(profile_vectors, axis=0, weights=weights).reshape(1, -1)
+        weights_arr = np.array(weights)
+        total_weight_sum = np.sum(weights_arr)
 
+        if abs(total_weight_sum) < 1e-6:
+            logger.info("Weights sum to zero (neutral profile). Falling back to popular books.")
+            return self.get_popular_books(n=top_n, languages=preferred_languages)
+
+        weights_arr = weights_arr / total_weight_sum
+
+        user_vector = np.average(profile_vectors, axis=0, weights=weights_arr).reshape(1, -1)
         sim_scores = cosine_similarity(user_vector, self.tfidf_matrix).flatten()
 
         rec_df = self.df.copy()
@@ -143,7 +138,6 @@ class BookRecommender:
                 .to_dict(orient='records'))
 
     def get_popular_books(self, n: int = 10, languages: List[str] = None) -> List[Dict[str, Any]]:
-        """Fallback method for Cold Start or general discovery."""
         sim_df = self.df.copy()
         if languages:
             sim_df = sim_df[sim_df['language'].isin(languages)]

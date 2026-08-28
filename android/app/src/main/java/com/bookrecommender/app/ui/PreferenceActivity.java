@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bookrecommender.app.R;
@@ -22,7 +23,10 @@ import com.bookrecommender.app.api.RetrofitClient;
 import com.bookrecommender.app.models.UserPreferences;
 import com.bookrecommender.app.utils.UserManager;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -143,12 +147,19 @@ public class PreferenceActivity extends AppCompatActivity {
         actvDislikedAuthors = findViewById(R.id.actvDislikedAuthors);
         actvDislikedBooks = findViewById(R.id.actvDislikedBooks);
 
-        tvSelLikedGenres = findViewById(R.id.tvSelectedLikedGenres);
-        tvSelLikedAuthors = findViewById(R.id.tvSelectedLikedAuthors);
-        tvSelLikedBooks = findViewById(R.id.tvSelectedLikedBooks);
-        tvSelDislikedGenres = findViewById(R.id.tvSelectedDislikedGenres);
-        tvSelDislikedAuthors = findViewById(R.id.tvSelectedDislikedAuthors);
-        tvSelDislikedBooks = findViewById(R.id.tvSelectedDislikedBooks);
+        tvSelLikedGenres = findViewById(R.id.tvSelLikedGenres);
+        tvSelLikedAuthors = findViewById(R.id.tvSelLikedAuthors);
+        tvSelLikedBooks = findViewById(R.id.tvSelLikedBooks);
+        tvSelDislikedGenres = findViewById(R.id.tvSelDislikedGenres);
+        tvSelDislikedAuthors = findViewById(R.id.tvSelDislikedAuthors);
+        tvSelDislikedBooks = findViewById(R.id.tvSelDislikedBooks);
+
+        tvSelLikedGenres.setOnClickListener(v -> showEditDialog(selLikedGenres, tvSelLikedGenres, "Liked Genres"));
+        tvSelLikedAuthors.setOnClickListener(v -> showEditDialog(selLikedAuthors, tvSelLikedAuthors, "Liked Authors"));
+        tvSelLikedBooks.setOnClickListener(v -> showEditDialog(selLikedBooks, tvSelLikedBooks, "Liked Books"));
+        tvSelDislikedGenres.setOnClickListener(v -> showEditDialog(selDislikedGenres, tvSelDislikedGenres, "Disliked Genres"));
+        tvSelDislikedAuthors.setOnClickListener(v -> showEditDialog(selDislikedAuthors, tvSelDislikedAuthors, "Disliked Authors"));
+        tvSelDislikedBooks.setOnClickListener(v -> showEditDialog(selDislikedBooks, tvSelDislikedBooks, "Disliked Books"));
 
         progressBar = findViewById(R.id.progressBar);
         btnSaveAndRecommend = findViewById(R.id.btnSaveAndRecommend);
@@ -211,7 +222,7 @@ public class PreferenceActivity extends AppCompatActivity {
             currentSearchCall.enqueue(new Callback<List<String>>() {
                 @Override
                 public void onResponse(Call<List<String>> call, Response<List<String>> response) {
-                    if (call.isCanceled()) return; // Ignore if canceled
+                    if (call.isCanceled()) return;
 
                     if (response.isSuccessful() && response.body() != null) {
                         List<String> suggestions = new ArrayList<>();
@@ -230,7 +241,7 @@ public class PreferenceActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<List<String>> call, Throwable t) {
-                    if (call.isCanceled()) return; // Ignore cancellation errors
+                    if (call.isCanceled()) return;
                     Log.e(TAG, "Search failed: " + t.getMessage());
                 }
             });
@@ -304,7 +315,16 @@ public class PreferenceActivity extends AppCompatActivity {
                     startActivity(new Intent(PreferenceActivity.this, MainActivity.class));
                     finish();
                 } else {
-                    Toast.makeText(PreferenceActivity.this, "Failed to save preferences", Toast.LENGTH_SHORT).show();
+                    String errorMsg = "Failed to save preferences";
+                    if (response.errorBody() != null) {
+                        try {
+                            JSONObject errorJson = new JSONObject(response.errorBody().string());
+                            errorMsg = errorJson.getString("detail");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    Toast.makeText(PreferenceActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -312,8 +332,38 @@ public class PreferenceActivity extends AppCompatActivity {
             public void onFailure(Call<UserPreferences> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 btnSaveAndRecommend.setEnabled(true);
-                Toast.makeText(PreferenceActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PreferenceActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
+
+    /**
+     * Shows a dialog to edit selected items.
+     */
+    private void showEditDialog(Set<String> set, TextView tvDisplay, String type) {
+        if (set.isEmpty()) {
+            Toast.makeText(this, "No items selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] items = set.toArray(new String[0]);
+        boolean[] checkedItems = new boolean[items.length];
+        Arrays.fill(checkedItems, true);
+
+        new AlertDialog.Builder(this)
+                .setTitle("✦ Edit " + type + " ✦")
+                .setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> {
+                    if (isChecked) {
+                        set.add(items[which]);
+                    } else {
+                        set.remove(items[which]);
+                    }
+                })
+                .setPositiveButton("Save", (dialog, which) -> {
+                    updateDisplayText(set, tvDisplay);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
 }

@@ -117,7 +117,16 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db)) -> UserModel
     db.commit()
     db.refresh(new_user)
 
-    pref = UserPreferenceModel(user_id=new_user.id, preferred_languages=[])
+    pref = UserPreferenceModel(
+        user_id=new_user.id,
+        preferred_languages=[],
+        liked_genres=[],
+        liked_authors=[],
+        liked_book_ids=[],
+        disliked_genres=[],
+        disliked_authors=[],
+        disliked_book_ids=[]
+    )
     db.add(pref)
     db.commit()
     return new_user
@@ -164,7 +173,16 @@ def get_user_preferences(user_id: int, db: Session = Depends(get_db)) -> UserPre
         raise HTTPException(status_code=404, detail="User not found")
     pref = db.query(UserPreferenceModel).filter(UserPreferenceModel.user_id == user_id).first()
     if not pref:
-        pref = UserPreferenceModel(user_id=user_id, preferred_languages=[])
+        pref = UserPreferenceModel(
+            user_id=user_id,
+            preferred_languages=[],
+            liked_genres=[],
+            liked_authors=[],
+            liked_book_ids=[],
+            disliked_genres=[],
+            disliked_authors=[],
+            disliked_book_ids=[]
+        )
         db.add(pref)
         db.commit()
         db.refresh(pref)
@@ -172,7 +190,8 @@ def get_user_preferences(user_id: int, db: Session = Depends(get_db)) -> UserPre
 
 
 @router.put("/users/{user_id}/preferences", response_model=PreferenceResponse, tags=["Users"])
-def update_user_preferences(user_id: int, pref_in: PreferenceCreate, db: Session = Depends(get_db)) -> UserPreferenceModel:
+def update_user_preferences(user_id: int, pref_in: PreferenceCreate,
+                            db: Session = Depends(get_db)) -> UserPreferenceModel:
     """
     Updates the user's liked/disliked genres, authors, and books.
 
@@ -190,23 +209,47 @@ def update_user_preferences(user_id: int, pref_in: PreferenceCreate, db: Session
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     pref = db.query(UserPreferenceModel).filter(UserPreferenceModel.user_id == user_id).first()
     if not pref:
         pref = UserPreferenceModel(user_id=user_id)
         db.add(pref)
 
-    pref.preferred_languages = pref_in.preferred_languages
-    pref.liked_genres = pref_in.liked_genres
-    pref.liked_authors = pref_in.liked_authors
-    pref.liked_book_ids = pref_in.liked_book_ids
-    pref.disliked_genres = pref_in.disliked_genres
-    pref.disliked_authors = pref_in.disliked_authors
-    pref.disliked_book_ids = pref_in.disliked_book_ids
+    liked_genres = set(pref_in.liked_genres or [])
+    disliked_genres = set(pref_in.disliked_genres or [])
+
+    liked_authors = set(pref_in.liked_authors or [])
+    disliked_authors = set(pref_in.disliked_authors or [])
+
+    liked_books = set(str(b) for b in (pref_in.liked_book_ids or []))
+    disliked_books = set(str(b) for b in (pref_in.disliked_book_ids or []))
+
+    conflict_genres = liked_genres & disliked_genres
+    conflict_authors = liked_authors & disliked_authors
+    conflict_books = liked_books & disliked_books
+
+    if conflict_genres or conflict_authors or conflict_books:
+        error_details = "Cannot like and dislike the same item: "
+        if conflict_genres:
+            error_details += f"Genres {list(conflict_genres)}, "
+        if conflict_authors:
+            error_details += f"Authors {list(conflict_authors)}, "
+        if conflict_books:
+            error_details += f"Books {list(conflict_books)}"
+
+        raise HTTPException(status_code=400, detail=error_details.strip(", "))
+
+    pref.preferred_languages = pref_in.preferred_languages or []
+    pref.liked_genres = list(liked_genres - disliked_genres)
+    pref.liked_authors = list(liked_authors - disliked_authors)
+    pref.liked_book_ids = list(liked_books - disliked_books)
+    pref.disliked_genres = list(disliked_genres - liked_genres)
+    pref.disliked_authors = list(disliked_authors - liked_authors)
+    pref.disliked_book_ids = list(disliked_books - liked_books)
 
     db.commit()
     db.refresh(pref)
     return pref
-
 
 @router.post("/feedback", response_model=FeedbackResponse, tags=["Feedback"])
 def submit_feedback(feedback_in: FeedbackCreate, db: Session = Depends(get_db)) -> UserFeedbackModel:
@@ -268,7 +311,7 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
 
     pref = db.query(UserPreferenceModel).filter(UserPreferenceModel.user_id == user_id).first()
     if not pref or not pref.preferred_languages:
-        logger.warning(f"COLD START TRIGGERED: User profile empty. Falling back to popular books.")
+        logger.info(f"COLD START TRIGGERED for User {user_id}. Falling back to popular books.")
         return get_popular_books(top_n=top_n, lang=None)
 
     try:
@@ -301,7 +344,7 @@ def get_personalized_recommendations(user_id: int, top_n: int = Query(10, ge=1, 
 
     except Exception as e:
         logger.error(f"Recommendation error for User {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
+        return get_popular_books(top_n=top_n, lang=None)
 
 
 @router.get("/books/popular", response_model=List[BookResponse], tags=["Books"])

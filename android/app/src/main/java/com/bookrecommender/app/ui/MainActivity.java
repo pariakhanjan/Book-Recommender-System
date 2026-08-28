@@ -125,6 +125,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadRecommendations() {
         int userId = userManager.getUserId();
+        if (userId == -1) {
+            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
+
         Log.d(TAG, "Loading recommendations for user: " + userId + " with top_n=" + selectedTopN);
         viewModel.loadPersonalizedRecommendations(userId, selectedTopN);
     }
