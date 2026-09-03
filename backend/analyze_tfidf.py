@@ -135,12 +135,22 @@ def analyze_sample_books(df, tfidf_matrix, num_samples=5):
         most_similar_idx = np.argmax(similarities)
         most_similar_book = df.iloc[most_similar_idx]
 
-        console.print(f"📖 **{book['title']}** by {book.get('author', 'Unknown')}")
+        title = str(book.get('title', 'Unknown'))
+        author = str(book.get('author', 'Unknown'))
+        language = str(book.get('language', 'N/A'))
+        genres = str(book.get('clean_genres', 'N/A'))
+        similar_title = str(most_similar_book.get('title', 'Unknown'))
+
+        # Replace string 'nan' with 'N/A' just in case
+        if genres.lower() == 'nan':
+            genres = 'N/A'
+
+        console.print(f"📖 **{title}** by {author}")
         console.print(f"   ├─ Non-zero TF-IDF features: {num_features}")
-        console.print(f"   ├─ Language: {book.get('language', 'N/A')}")
-        console.print(f"   ├─ Genres: {book.get('clean_genres', 'N/A')[:60]}...")
+        console.print(f"   ├─ Language: {language}")
+        console.print(f"   ├─ Genres: {genres[:60]}...")
         console.print(
-            f"   └─ Most similar: **{most_similar_book['title']}** (similarity: {similarities[most_similar_idx]:.4f})")
+            f"   └─ Most similar: **{similar_title}** (similarity: {similarities[most_similar_idx]:.4f})")
         console.print()
 
 
