@@ -51,17 +51,23 @@
                 android:layout_marginStart="8dp" />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✦ Username"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_purple"
+            android:layout_marginBottom="4dp" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUsername"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Username"
             android:layout_marginBottom="16dp"
-            android:textColor="@color/primary_purple"
             app:boxStrokeColor="@color/primary_purple"
-            app:hintTextColor="@color/primary_purple"
-            app:startIconTint="@color/primary_purple">
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etUsername"
@@ -69,24 +75,29 @@
                 android:layout_height="wrap_content"
                 android:inputType="text"
                 android:textColor="@color/primary_purple"
-                android:textColorHint="@color/primary_purple"
                 android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✦ Password"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_purple"
+            android:layout_marginBottom="4dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPassword"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
             android:layout_marginBottom="32dp"
             app:boxStrokeColor="@color/primary_purple"
-            app:hintTextColor="@color/primary_purple"
             app:endIconMode="password_toggle"
-            android:textColor="@color/primary_purple"
             app:endIconTint="@color/primary_purple"
-            app:startIconTint="@color/primary_purple">
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPassword"
@@ -94,7 +105,6 @@
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
                 android:textColor="@color/primary_purple"
-                android:textColorHint="@color/primary_purple"
                 android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>

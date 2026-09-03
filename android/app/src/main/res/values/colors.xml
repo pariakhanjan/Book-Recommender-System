@@ -9,4 +9,6 @@
     <color name="gray_text">#666666</color>
     <color name="rating_color">#FF9800</color>
     <color name="placeholder_bg">#A47DAB</color>
+    <color name="dark_purple">#6B3BA0</color>
+    <color name="hint_text_color">#4A2960</color>
 </resources>

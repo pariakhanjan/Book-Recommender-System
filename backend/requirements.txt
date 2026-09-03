@@ -1,23 +1,13 @@
-# Core API
-fastapi==0.115.0
-uvicorn==0.30.6
-pydantic==2.9.2
-
-# Data & ML
-numpy==1.26.4
-pandas==2.1.4
-scikit-learn==1.5.1
-joblib==1.4.2
-
-# NLP
-hazm==0.10.0
-langdetect==1.0.9
-nltk==3.8.1
-
-# Database & Auth
-SQLAlchemy==2.0.35
-bcrypt==4.2.0
-python-dotenv==1.0.1
-
-# Utilities
-rich==13.8.1
+uvicorn~=0.52.4
+fastapi~=0.141.1
+rich~=15.0.0
+pandas~=3.0.5
+bcrypt~=5.0.0
+SQLAlchemy~=2.0.52
+pydantic~=2.13.4
+numpy~=2.4.6
+scikit-learn~=1.9.0
+joblib~=1.5.3
+langdetect~=1.0.9
+hazm~=0.10.0
+pytest~=9.1.1
