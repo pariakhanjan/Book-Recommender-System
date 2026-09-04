@@ -176,5 +176,3 @@ The recommendation engine uses a **Positive-Only Profiling with Negative Filteri
 ## 📄 License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
-کافی است این متن را در فایل `README.md` پیست کرده و کامیت کنید. در گیت‌هاب فوق‌العاده خواهد شد! 🚀
