@@ -1,6 +1,25 @@
 # 📚 Book Recommender System
 
-A comprehensive, smart book recommendation system featuring a **Python/FastAPI backend** and an **Android (Java) frontend**. The system utilizes Content-Based Filtering with TF-IDF and Cosine Similarity, trained on a bilingual (English & Persian) dataset, to deliver personalized, dynamic book recommendations.
+> An intelligent, bilingual (English & Persian) book recommendation system utilizing advanced Weighted Content-Based Filtering to deliver highly personalized and dynamic suggestions.
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-005571?logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Android-Java-3DDC84?logo=android" alt="Android">
+  <img src="https://img.shields.io/badge/ML-TF--IDF-orange?logo=scikitlearn" alt="Machine Learning">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+</p>
+
+---
+
+## 📑 Table of Contents
+- [📁 Project Structure](#-project-structure)
+- [⚙️ Backend Setup](#️-backend-setup--execution)
+- [📱 Android Setup](#-android-setup--execution)
+- [🌐 API Documentation](#-api-documentation)
+- [🧠 Algorithm & Architecture](#-algorithm--architecture)
+- [📊 Statistics & Quality](#-statistics--quality-assurance)
+- [⚠️ Important Notes](#️-important-notes)
 
 ---
 
@@ -9,27 +28,26 @@ A comprehensive, smart book recommendation system featuring a **Python/FastAPI b
 ```text
 Book-Recommender-System/
 ├── backend/                    # Python FastAPI Backend
-│   ├── api/                    # Endpoints, schemas, and main app
-│   ├── data/                   # Raw and processed datasets
-│   ├── src/                    # Core logic (preprocess, features, recommender, db)
+│   ├── api/                    # Endpoints, Pydantic schemas, and main app
+│   ├── data/                   # Raw and processed datasets, TF-IDF matrices
+│   ├── src/                    # Core logic (preprocessing, recommender, database)
+│   ├── tests/                  # Pytest unit and integration tests
 │   ├── utils/                  # Helper utilities (e.g., rich logging)
 │   ├── .env                    # Environment variables (DO NOT COMMIT)
 │   ├── requirements.txt        # Python dependencies
-│   └── setup_database.sql      # PostgreSQL initialization script
+│   └── analyze_tfidf.py        # Script for vector distinctiveness analysis
 │
 └── android/                    # Android Application (Java)
     ├── app/
     │   ├── src/main/
     │   │   ├── java/com/bookrecommender/app/
-    │   │   │   ├── api/        # Retrofit interfaces and clients
+    │   │   │   ├── api/        # Retrofit interfaces and OkHttp clients
     │   │   │   ├── models/     # Data classes (Book, User, Feedback, etc.)
-    │   │   │   ├── ui/         # Activities and Adapters (Main, Setup, Detail)
-    │   │   │   ├── utils/      # Utilities (NetworkUtils, UserManager)
-    │   │   │   └── viewmodel/  # ViewModel for state management
-    │   │   ├── res/            # Layouts, colors, strings, themes
+    │   │   │   ├── ui/         # Activities and Adapters (Auth, Preferences, Main)
+    │   │   │   └── utils/      # Utilities (UserManager, Network helpers)
+    │   │   ├── res/            # Layouts, colors, strings, themes, drawables
     │   │   └── AndroidManifest.xml
-    │   └── build.gradle        # Android dependencies
-    └── gradle.properties
+    │   └── build.gradle        # Android dependencies and build config
 ```
 
 ---
@@ -37,8 +55,8 @@ Book-Recommender-System/
 ## ⚙️ Backend Setup & Execution
 
 ### Prerequisites
-- Python 3.9+
-- PostgreSQL 12+
+- Python 3.9+ (Recommended: **3.11**)
+- PostgreSQL 12+ (or SQLite for local testing)
 - `pip` and `venv`
 
 ### Step-by-Step Setup
@@ -52,27 +70,22 @@ Book-Recommender-System/
    ```bash
    pip install -r backend/requirements.txt
    ```
-3. **Configure Environment Variables:**
+3. **Configure Environment Variables:**  
    Create a `.env` file in the `backend/` directory:
    ```env
-   DB_USER=postgres
-   DB_PASSWORD=your_actual_password
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=book_recommender
+   DATABASE_URL=sqlite:///./book_recommender.db
+   # For PostgreSQL: postgresql://user:password@localhost:5432/book_recommender
+   SECRET_KEY=your_super_secret_key_here
    ```
-4. **Initialize the Database:**
+4. **Preprocess Data & Extract Features:**  
+   *(This step cleans text, preserves multi-word genres, and builds the TF-IDF matrix)*
    ```bash
-   psql -U postgres -h localhost -d book_recommender -f backend/setup_database.sql
+   python -m src.preprocessing
+   python -m src.features
    ```
-5. **Preprocess Data & Extract Features:**
+5. **Run the Server:**
    ```bash
-   python -m backend.src.preprocess
-   python -m backend.src.features
-   ```
-6. **Run the Server:**
-   ```bash
-   uvicorn backend.api.main:app --reload --host 0.0.0.0 --port 8000
+   uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
 ---
@@ -81,24 +94,23 @@ Book-Recommender-System/
 
 ### Prerequisites
 - Android Studio (latest stable version)
-- JDK 11 or 17
+- JDK 17
 - A physical Android device or emulator
 
 ### Step-by-Step Setup
 1. **Open the Project:** Open the `android/` folder in Android Studio.
-2. **Sync Gradle:** Allow Android Studio to download all dependencies (Retrofit2, OkHttp, Gson, Glide, Lifecycle).
-3. **Configure Network:** 
-   - The app automatically detects the host machine's local IPv4 address using `NetworkUtils.java`.
-   - Ensure your Android device and computer are on the **same Wi-Fi network**.
-   - Ensure Windows Firewall allows inbound connections on port `8000`.
-4. **Run the App:** Click the **Run** button (green triangle) or use `Shift + F10`.
+2. **Sync Gradle:** Allow Android Studio to download all dependencies (Retrofit2, OkHttp, Gson, Glide).
+3. **Configure Network Connection:**  
+   Open `android/app/build.gradle` and locate `currentApiUrl` in `defaultConfig`:
+   - **For Local Demo (Recommended):** Set to your computer's local IP (e.g., `"http://192.168.43.XX:8000/api/"`). Connect your phone to your computer's Wi-Fi Hotspot for a stable, isolated network.
+   - **For Cloud Deployment:** Set to your Render/Cloud URL (e.g., `"https://your-app.onrender.com/api/"`).
+4. **Build and Run:** Click the **Run** button (▶️) or execute `.\gradlew installDebug` in the terminal.
 
 ### Key Android Features
-- **Dynamic IP Resolution:** Automatically finds the host machine's IP, eliminating hardcoded URLs and Wi-Fi switching issues.
-- **Auth & Onboarding:** Secure Signup/Login with mandatory language selection (EN/FA) and optional preference selection (genres/authors).
-- **Personalized UI:** Soft purple and blue theme with smooth transitions and user-friendly error handling.
-- **Interactive Feedback:** Like/Dislike buttons that instantly update the user's profile and trigger dynamic recommendation recalculations.
-- **Reload Control:** Users can choose the number of recommendations (5, 10, 20, 50) and refresh the list on demand.
+- ✨ **Clean, Modern UI:** Soft purple/blue theme with explicit text labels and clear visual feedback.
+- 🔍 **Dynamic AutoComplete:** Real-time search for genres, authors, and books with debounced backend queries.
+- ⚡ **Interactive Feedback:** Like/Dislike buttons that instantly update the user's profile and trigger dynamic recalculations.
+- 🛡️ **Robust Error Handling:** Graceful handling of network failures and API validation errors.
 
 ---
 
@@ -108,55 +120,59 @@ Once the backend server is running, interactive API documentation is automatical
 - **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-### Key Endpoints
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/auth/login` | Authenticate user and retrieve `user_id`. |
 | `POST` | `/api/users` | Create a new user account (passwords hashed via bcrypt). |
-| `PUT` | `/api/users/{user_id}/preferences` | Update user preferences (languages, liked/disliked items). |
-| `GET` | `/api/users/{user_id}/recommendations` | Get personalized recommendations (triggers **Cold Start** fallback if empty). |
-| `POST` | `/api/feedback` | Submit feedback (`liked` or `disliked`) to dynamically update preferences. |
-| `GET` | `/api/books/popular` | Retrieve top-rated popular books (supports `lang` query). |
+| `PUT` | `/api/users/{user_id}/preferences` | Update user preferences. *Includes backend validation to prevent like/dislike conflicts.* |
+| `GET` | `/api/users/{user_id}/recommendations` | Get personalized recommendations. *Triggers **Cold Start** fallback if profile is empty.* |
+| `POST` | `/api/feedback` | Submit feedback (`liked` or `disliked`) to dynamically update preferences in real-time. |
 
 ---
 
 ## 🧠 Algorithm & Architecture
 
-The recommendation engine uses a **Weighted Content-Based Filtering** approach:
+The recommendation engine uses a **Positive-Only Profiling with Negative Filtering** approach to ensure stability, prevent weight cancellation, and eliminate author bias:
 
-1. **Text Processing:** Bilingual NLP pipeline. English uses standard tokenization/stopword removal. Persian utilizes the `Hazm` library for normalization, lemmatization, and stopword removal.
-2. **Feature Extraction:** TF-IDF vectorization applied to a weighted "soup" of metadata (Genres x4, Title x2, Author x2, Description x1) creating a 20,000-feature sparse matrix.
-3. **Dynamic User Profiling:** Composite user vector built using research-backed weights:
-   - **Liked Books:** `0.50` (Strongest signal of exact taste)
-   - **Liked Genres:** `0.25` (Moderate signal of thematic preference)
-   - **Liked Authors:** `0.15` (Weaker signal to prevent author overfitting)
-   - **Disliked Items:** Symmetrical negative weights (`-0.50`, `-0.25`, `-0.15`) to actively filter unwanted content.
-   - **Rating Boost:** `+0.10` boost applied to the final cosine similarity score based on average rating.
-4. **Cold Start Handling:** If user preferences are empty, the system gracefully falls back to returning the highest-rated popular books, strictly filtered by the user's selected `preferred_languages`.
+1. **Bilingual Text Processing:** English uses standard tokenization. Persian utilizes the `Hazm` library for normalization, lemmatization, and stopword removal. *Crucially, multi-word genres/authors preserve spaces for accurate matching.*
+2. **Feature Extraction:** TF-IDF vectorization applied to a weighted "soup" of metadata (Genres ×4, Title ×2, Author ×2, Description ×1), creating a highly efficient 20,000-feature sparse matrix.
+3. **Dynamic User Profiling (Positive Weights):**
+   - **Liked Books:** `0.50` *(Strongest signal of exact taste)*
+   - **Liked Genres:** `0.45` *(Promotes thematic diversity and discovery)*
+   - **Liked Authors:** `0.05` *(Intentionally low weight to prevent author overfitting/bias)*
+4. **Negative Filtering & Penalty (Dislikes):**
+   - **Hard Filter:** Any book ID explicitly disliked is completely removed from the candidate pool.
+   - **Similarity Penalty:** Books matching disliked genres or authors receive a `-0.50` penalty to their final cosine similarity score, pushing them to the bottom of the list.
+5. **Cold Start Handling:** If user preferences are empty, the system gracefully falls back to returning the highest-rated popular books, strictly filtered by the user's selected `preferred_languages`.
 
 ---
 
-## 📊 Project Statistics
+## 📊 Statistics & Quality Assurance
 
-| Metric | Value |
+| Metric | Value / Status |
 | :--- | :--- |
-| **Total Books Processed** | ~68,000 (English & Persian combined) |
-| **TF-IDF Vocabulary Size** | 20,000 optimized features |
-| **Sparse Matrix Efficiency** | Highly memory-efficient storage via `joblib` |
+| **Total Books Processed** | ~50,500+ (English & Persian combined) |
+| **TF-IDF Vocabulary Size** | 20,000 optimized, distinct features |
+| **Vector Distinctiveness** | **Excellent** (Mean Max Similarity: ~0.40, ensuring books are well-differentiated) |
+| **Exact Duplicates** | 0% (Every book has a unique semantic signature) |
 | **Security** | Bcrypt password hashing, SQL injection prevention via SQLAlchemy ORM |
-| **Android Architecture** | MVVM (Model-View-ViewModel) with LiveData |
+| **Testing** | Comprehensive `pytest` suite covering preprocessing, schemas, and recommender logic |
 
 ---
 
 ## ⚠️ Important Notes
 
-1. **Hazm Library:** Installing `hazm` is highly recommended for optimal Persian text processing. The system falls back to regex-based cleaning if unavailable.
-2. **Production Security:** Before deploying, change `allow_origins=["*"]` in `main.py` to your specific frontend domain, and never commit the `.env` file.
-3. **Language Enforcement:** The API strictly requires `preferred_languages` to be set before generating personalized recommendations to prevent cross-language noise.
-4. **Feedback Payload:** When sending feedback from Android, ensure `feedback_type` exactly matches `"liked"` or `"disliked"` (not "like"/"dislike") to pass Pydantic validation.
+> [!IMPORTANT]
+> **Demo Strategy:** For the most reliable presentation/defense, use the **Local Hotspot method**. Connect the laptop and phone to the same mobile hotspot, disable mobile data, and use the laptop's hotspot IP. This guarantees zero dependency on university Wi-Fi or external internet.
+
+> [!WARNING]
+> **Feedback Payload:** When sending feedback from Android, ensure `feedback_type` exactly matches `"liked"` or `"disliked"` (not "like"/"dislike") to pass Pydantic validation.
+
+> [!NOTE]
+> **Hazm Library:** Installing `hazm` is required for optimal Persian text processing. The system includes fallbacks, but full NLP capabilities depend on it.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
