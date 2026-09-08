@@ -99,6 +99,16 @@ def is_english_title(title: str) -> bool:
         return False
 
 
+def fix_taaghche_image_urls(df: pd.DataFrame, column: str = 'coverImg') -> pd.DataFrame:
+    old_domain = "https://img.taaghchecdn.com"
+    new_domain = "https://img.taaghche.com"
+
+    mask = df[column].astype(str).str.contains(old_domain, na=False)
+    df.loc[mask, column] = df.loc[mask, column].str.replace(old_domain, new_domain, regex=False)
+
+    return df
+
+
 def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     """
     Loads raw datasets, cleans text, and engineers the 'soup' feature for TF-IDF.
@@ -134,6 +144,9 @@ def preprocess_dataset(output_path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
         df_fa = df_fa.rename(
             columns={'book_id': 'bookId', 'author_name': 'author', 'categories': 'genres', 'coveruri': 'coverImg'})
         df_fa = df_fa[['bookId', 'title', 'author', 'genres', 'description', 'rating', 'coverImg']]
+
+        df_fa = fix_taaghche_image_urls(df_fa)
+
         df_fa['language'] = 'fa'
         df_fa['bookId'] = "fa_" + df_fa['bookId'].astype(str)
         dfs.append(df_fa)
